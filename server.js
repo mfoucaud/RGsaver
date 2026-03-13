@@ -4,7 +4,8 @@ const path = require('path');
 const os = require('os');
 
 const app = express();
-const db = new Database(path.join(__dirname, 'rgsaver.db'));
+const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'rgsaver.db');
+const db = new Database(DB_PATH);
 db.pragma('journal_mode = WAL');
 
 // ═══════════════════════════════════════════════════════════════

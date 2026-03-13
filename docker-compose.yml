@@ -1,0 +1,15 @@
+services:
+  rgsaver:
+    build: .
+    container_name: rgsaver
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - rgsaver-data:/data
+    environment:
+      - PORT=3000
+      - DB_PATH=/data/rgsaver.db
+
+volumes:
+  rgsaver-data:
