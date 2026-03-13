@@ -1,6 +1,7 @@
 /**
- * seed-dgfip.js — Insère les règles de gestion DGFIP (fiscalité publique française)
- * Sources : BOFiP, impots.gouv.fr, service-public.fr, legifrance.gouv.fr
+ * seed-dgfip.js — Règles de gestion pour les collectivités territoriales
+ * Thèmes : marchés publics, factures, budget M57, immobilisations, subventions, PES V2
+ * Sources : code de la commande publique, CGCT, instruction M57, circulaires DGFiP
  * Usage : node scripts/seed-dgfip.js
  */
 
@@ -21,367 +22,267 @@ const DOMAINE = 'DGFIP';
 const regles = [
 
   // ══════════════════════════════════════════════════════
-  //  TVA — Taux
+  //  MARCHÉS PUBLICS — Seuils et procédures
   // ══════════════════════════════════════════════════════
   {
-    code: 'RG-014', groupe: 'TVA — Taux et régimes',
-    titre: 'Taux normal de TVA',
-    description: `Le taux normal de TVA applicable en France métropolitaine est de 20 %. Il s'applique à toutes les opérations imposables qui ne bénéficient pas d'un taux réduit, intermédiaire ou particulier. Il s'applique notamment aux ventes de biens et prestations de services sans régime spécifique.`,
-    statut: 'Active', priorite: 'Critique', type_regle: 'Légale',
-    tags: 'TVA, taux normal, 20%, imposition',
-    source: 'CGI art. 278 — BOFiP TVA-LIQ-30-10', fichier: 'src/tax/VatRateService.java', ecran: '',
-  },
-  {
-    code: 'RG-015', groupe: 'TVA — Taux et régimes',
-    titre: 'Taux réduit de TVA à 5,5 %',
-    description: `Le taux réduit de 5,5 % s'applique notamment aux produits alimentaires destinés à la consommation humaine, aux livres (y compris numériques), aux équipements et services pour personnes handicapées, aux abonnements gaz et électricité, et aux travaux de rénovation énergétique dans les logements. Les opérations concernées sont listées à l'article 278-0 bis du CGI.`,
-    statut: 'Active', priorite: 'Critique', type_regle: 'Légale',
-    tags: 'TVA, taux réduit, 5.5%, alimentation, livres, énergie',
-    source: 'CGI art. 278-0 bis — BOFiP TVA-LIQ-30-20', fichier: 'src/tax/VatRateService.java', ecran: '',
-  },
-  {
-    code: 'RG-016', groupe: 'TVA — Taux et régimes',
-    titre: 'Taux intermédiaire de TVA à 10 %',
-    description: `Le taux intermédiaire de 10 % s'applique à la restauration (consommation sur place), aux travaux d'amélioration du logement, aux produits agricoles non transformés, aux médicaments non remboursables, au transport de voyageurs, aux droits d'entrée dans les parcs d'attractions et aux activités cinématographiques.`,
+    code: 'RG-014', groupe: 'Marchés publics — Seuils et procédures',
+    titre: 'Marché public sans mise en concurrence < 40 000 € HT',
+    description: `En dessous de 40 000 € HT, l'acheteur public peut passer un marché sans publicité ni mise en concurrence formelle. Il doit néanmoins veiller à une bonne utilisation des deniers publics et à ne pas contracter systématiquement avec le même fournisseur. Cette règle s'applique aux fournitures, services et travaux. Le montant de 40 000 € s'apprécie en agrégeant les besoins de même nature sur l'ensemble de l'exercice budgétaire.`,
     statut: 'Active', priorite: 'Haute', type_regle: 'Légale',
-    tags: 'TVA, taux intermédiaire, 10%, restauration, travaux, transport',
-    source: 'CGI art. 278 bis — BOFiP TVA-LIQ-30-30', fichier: 'src/tax/VatRateService.java', ecran: '',
+    tags: 'marché public, seuil, 40000€, sans mise en concurrence, acheteur',
+    source: 'Code de la commande publique art. R2122-8 — Décret 2019-1344', fichier: '', ecran: 'Saisie bon de commande',
   },
   {
-    code: 'RG-017', groupe: 'TVA — Taux et régimes',
-    titre: 'Taux particulier de TVA à 2,1 %',
-    description: `Le taux particulier de 2,1 % s'applique aux médicaments remboursables par la sécurité sociale, aux publications de presse enregistrées à la Commission Paritaire des Publications, et aux premières représentations théâtrales et de cirque. Ce taux ne s'applique qu'en France métropolitaine et dans les DOM (sauf taux spécifiques).`,
+    code: 'RG-015', groupe: 'Marchés publics — Seuils et procédures',
+    titre: 'MAPA — Marché à procédure adaptée (fournitures/services < 221 000 € HT)',
+    description: `Entre 40 000 € HT et 221 000 € HT pour les fournitures et services, l'acheteur suit une procédure adaptée (MAPA). Les règles de publicité et de mise en concurrence sont définies librement dans le règlement de consultation, en fonction de l'objet et du montant estimé. La publicité est obligatoire mais sans formalisme imposé ; elle peut être réalisée sur le profil d'acheteur. Le délai minimum de réception des offres doit être raisonnable (généralement 15 à 30 jours).`,
+    statut: 'Active', priorite: 'Critique', type_regle: 'Légale',
+    tags: 'MAPA, marché adapté, 221000€, fournitures, services, publicité',
+    source: 'Code de la commande publique art. L2123-1 et R2123-1', fichier: '', ecran: 'Gestion marchés',
+  },
+  {
+    code: 'RG-016', groupe: 'Marchés publics — Seuils et procédures',
+    titre: 'Appel d\'offres ouvert — Seuils 2024 (fournitures/services)',
+    description: `Pour les collectivités territoriales et leurs établissements publics, l'appel d'offres ouvert est obligatoire à partir de 221 000 € HT pour les marchés de fournitures et de services. Le délai minimum de réception des offres est de 35 jours à compter de la date d'envoi de l'avis de marché. Il peut être réduit à 15 jours si un avis de préinformation a été publié. La publication se fait au JOUE (Journal Officiel de l'Union Européenne) et au BOAMP.`,
+    statut: 'Active', priorite: 'Critique', type_regle: 'Légale',
+    tags: 'appel offres, seuil européen, 221000€, JOUE, BOAMP, 35 jours',
+    source: 'Code de la commande publique art. L2124-2 — Règlement UE 2023/2493', fichier: '', ecran: 'Gestion marchés',
+  },
+  {
+    code: 'RG-017', groupe: 'Marchés publics — Seuils et procédures',
+    titre: 'Appel d\'offres ouvert — Seuil travaux 2024',
+    description: `Pour les marchés de travaux des collectivités locales, le seuil de l'appel d'offres obligatoire est fixé à 5 538 000 € HT en 2024. En dessous, une procédure adaptée (MAPA travaux) est possible. Au-dessus du seuil communautaire, la publication est obligatoire au JOUE avec un délai minimal de 35 jours pour la remise des offres. Ce seuil est révisé tous les deux ans par la Commission européenne.`,
+    statut: 'Active', priorite: 'Critique', type_regle: 'Légale',
+    tags: 'appel offres, travaux, 5538000€, seuil européen, MAPA travaux',
+    source: 'Code de la commande publique art. L2124-2 — Règlement UE 2023/2493', fichier: '', ecran: 'Gestion marchés',
+  },
+  {
+    code: 'RG-018', groupe: 'Marchés publics — Seuils et procédures',
+    titre: 'Dématérialisation obligatoire des marchés ≥ 40 000 € HT',
+    description: `Depuis le 1er octobre 2018, la dématérialisation est obligatoire pour les marchés ≥ 25 000 € HT (seuil abaissé à 40 000 € HT pour certaines collectivités). Le profil d'acheteur dématérialisé est obligatoire pour la publication et le dépôt des offres. Les échanges (notifications, questions, réponses) doivent être réalisés par voie électronique. La signature électronique est recommandée mais non obligatoire pour les marchés < seuils européens.`,
+    statut: 'Active', priorite: 'Haute', type_regle: 'Légale',
+    tags: 'dématérialisation, profil acheteur, 40000€, signature électronique, offres',
+    source: 'Code de la commande publique art. R2132-1 — Décret 2016-360', fichier: '', ecran: 'Gestion marchés — profil acheteur',
+  },
+  {
+    code: 'RG-019', groupe: 'Marchés publics — Seuils et procédures',
+    titre: 'Contrôle de légalité préfectoral sur les marchés publics',
+    description: `Les marchés de travaux, fournitures et services d'un montant ≥ 209 000 € HT (seuil 2024) sont soumis à l'obligation de transmission au contrôle de légalité préfectoral. Cette transmission doit être effectuée dans les 15 jours suivant la notification du marché. En dessous de ce seuil, la transmission est facultative mais l'acheteur reste responsable de la légalité de ses actes.`,
+    statut: 'Active', priorite: 'Haute', type_regle: 'Légale',
+    tags: 'contrôle légalité, préfet, transmission, 209000€, notification',
+    source: 'CGCT art. L2131-2 et L3131-2 — Code de la commande publique', fichier: '', ecran: 'Gestion marchés',
+  },
+  {
+    code: 'RG-020', groupe: 'Marchés publics — Seuils et procédures',
+    titre: 'Avances sur marchés publics — Obligation et calcul',
+    description: `Pour les marchés > 50 000 € HT d'une durée > 2 mois, une avance est obligatoire si le titulaire n'y renonce pas. Le taux minimum légal est de 5 % du montant initial TTC du marché. La collectivité peut prévoir un taux plus élevé (jusqu'à 30 % en général). Le remboursement commence lorsque les paiements atteignent 65 % du montant initial et doit être terminé à 80 %. Le titulaire doit fournir une garantie à première demande si l'avance dépasse 30 % du montant HT.`,
     statut: 'Active', priorite: 'Normale', type_regle: 'Légale',
-    tags: 'TVA, taux particulier, 2.1%, médicaments, presse',
-    source: 'CGI art. 281 quater — BOFiP TVA-LIQ-30-40', fichier: 'src/tax/VatRateService.java', ecran: '',
+    tags: 'avance, marché public, 5%, 50000€, garantie, remboursement, 65%',
+    source: 'Code de la commande publique art. R2191-3 à R2191-9', fichier: 'src/marches/AvanceService.java', ecran: 'Suivi marchés — avances',
+  },
+  {
+    code: 'RG-021', groupe: 'Marchés publics — Seuils et procédures',
+    titre: 'Délai global de paiement des marchés publics',
+    description: `Le délai global de paiement (DGP) pour les collectivités territoriales est de 30 jours à compter de la réception de la demande de paiement. En cas de dépassement, des intérêts moratoires sont dus automatiquement, sans mise en demeure, au taux de la BCE majoré de 8 points. Une indemnité forfaitaire de recouvrement de 40 € est également due par facture impayée dans les délais. Pour les entreprises de sous-traitance, le délai court à partir du paiement du titulaire principal.`,
+    statut: 'Active', priorite: 'Critique', type_regle: 'Légale',
+    tags: 'paiement, DGP, 30 jours, intérêts moratoires, 40€, BCE, sous-traitant',
+    source: 'Code de la commande publique art. L2192-10 — Décret 2013-269', fichier: 'src/facturation/PaiementService.java', ecran: 'Suivi marchés — paiements',
   },
 
   // ══════════════════════════════════════════════════════
-  //  TVA — Franchise et régimes
+  //  FACTURES PUBLIQUES
   // ══════════════════════════════════════════════════════
   {
-    code: 'RG-018', groupe: 'TVA — Taux et régimes',
-    titre: 'Franchise en base de TVA — Seuils 2024',
-    description: `La franchise en base dispense de la déclaration et du paiement de la TVA. Seuils 2024 : ventes de marchandises, fourniture de logement, restauration : seuil normal 91 900 €, seuil de tolérance 101 000 € ; prestations de services et professions libérales : seuil normal 36 800 €, seuil de tolérance 39 100 €. Le dépassement du seuil de tolérance entraîne l'assujettissement à la TVA dès le 1er jour du mois de dépassement.`,
+    code: 'RG-022', groupe: 'Factures publiques — Dématérialisation',
+    titre: 'Facturation électronique obligatoire via Chorus Pro',
+    description: `Depuis le 1er janvier 2020, toutes les entreprises (quelle que soit leur taille) qui facturent une entité publique doivent émettre leurs factures via la plateforme Chorus Pro. Les formats acceptés sont : PDF structuré (Factur-X), XML UBL 2.1, XML CII (Cross Industry Invoice), et EDI. La facture papier n'est plus acceptée. Les collectivités territoriales doivent paramétrer leurs codes service et engagements juridiques dans Chorus Pro pour recevoir et traiter les factures.`,
     statut: 'Active', priorite: 'Critique', type_regle: 'Légale',
-    tags: 'TVA, franchise, seuil, 91900, 36800, micro-entreprise',
-    source: 'CGI art. 293 B — BOFiP TVA-DECLA-40-10', fichier: '', ecran: 'Espace professionnel — seuils franchise',
+    tags: 'Chorus Pro, facture électronique, Factur-X, XML, UBL, fournisseur',
+    source: 'Ordonnance 2014-697 — Décret 2016-1478 — DGFIP Chorus Pro', fichier: 'src/facturation/ChorusProService.java', ecran: 'Réception factures',
   },
   {
-    code: 'RG-019', groupe: 'TVA — Taux et régimes',
-    titre: 'Régime réel simplifié de TVA',
-    description: `Le régime réel simplifié s'applique si le CA HT est inférieur à 840 000 € (négoce/hébergement) ou 254 000 € (services), et si la TVA annuelle nette est < 15 000 €. L'entreprise dépose une déclaration annuelle CA12 et verse deux acomptes semestriels en juillet (55 % de la TVA N-1) et décembre (40 %). Si la TVA annuelle dépasse 15 000 €, passage obligatoire au régime réel normal.`,
-    statut: 'Active', priorite: 'Haute', type_regle: 'Légale',
-    tags: 'TVA, régime simplifié, CA12, acomptes, 840000',
-    source: 'CGI art. 302 septies A — BOFiP TVA-DECLA-20', fichier: '', ecran: 'Espace professionnel — déclaration TVA',
+    code: 'RG-023', groupe: 'Factures publiques — Dématérialisation',
+    titre: 'Mentions obligatoires sur une facture de marché public',
+    description: `Une facture destinée à une collectivité publique doit comporter : le numéro SIRET du fournisseur et de la collectivité, le numéro de marché ou de bon de commande, le code service destinataire (SIRET + code), le numéro d'engagement juridique si requis, la désignation précise des prestations, les montants HT, les taux et montants de TVA, le montant TTC, les coordonnées bancaires (IBAN/BIC), et la date d'émission. L'absence de ces mentions peut entraîner un refus de la facture par l'ordonnateur ou le comptable.`,
+    statut: 'Active', priorite: 'Haute', type_regle: 'Fonctionnelle',
+    tags: 'facture, mentions obligatoires, SIRET, IBAN, marché, code service',
+    source: 'Code de la commande publique art. R2192-1 — Arrêté du 09/12/2016', fichier: 'src/facturation/FactureValidationService.java', ecran: 'Saisie facture — vérification',
   },
   {
-    code: 'RG-020', groupe: 'TVA — Taux et régimes',
-    titre: 'Régime réel normal de TVA — Déclaration mensuelle',
-    description: `Au régime réel normal, la TVA est déclarée et payée mensuellement via la déclaration CA3. La déclaration est déposée avant le 24 du mois suivant pour les entreprises dont le CA est > 4 M€, avant le 19 pour les autres. Si la TVA annuelle est < 4 000 €, la déclaration peut être trimestrielle sur option. Le télépaiement est obligatoire.`,
+    code: 'RG-024', groupe: 'Factures publiques — Dématérialisation',
+    titre: 'Pièces justificatives obligatoires pour le paiement',
+    description: `Le comptable public ne peut payer une dépense que si elle est accompagnée des pièces justificatives réglementaires listées dans le décret PJ (nomenclature des PJ). Pour les marchés, les PJ minimales sont : l'acte d'engagement ou bon de commande, le procès-verbal de service fait, la facture. Pour les subventions : la convention signée, l'état liquidatif ou appel de fonds. Le comptable engage sa responsabilité personnelle et pécuniaire s'il paye sans PJ suffisantes.`,
     statut: 'Active', priorite: 'Critique', type_regle: 'Légale',
-    tags: 'TVA, réel normal, CA3, déclaration mensuelle, télépaiement',
-    source: 'CGI art. 287 — BOFiP TVA-DECLA-20-20', fichier: 'src/tax/VatDeclarationService.java', ecran: 'Espace professionnel — déclaration TVA',
-  },
-  {
-    code: 'RG-021', groupe: 'TVA — Taux et régimes',
-    titre: 'Droit à déduction de la TVA',
-    description: `La TVA sur les achats de biens et services utilisés pour les besoins d'une activité taxable est déductible. La déduction est exercée sur la déclaration du mois de réception de la facture. Les biens destinés à des opérations exonérées n'ouvrent pas droit à déduction. Le prorata de déduction s'applique aux assujettis partiels (rapport CA taxé / CA total).`,
-    statut: 'Active', priorite: 'Critique', type_regle: 'Légale',
-    tags: 'TVA, déduction, prorata, facture, assujetti partiel',
-    source: 'CGI art. 271 — BOFiP TVA-DED-10', fichier: 'src/tax/VatDeductionService.java', ecran: '',
-  },
-  {
-    code: 'RG-022', groupe: 'TVA — Taux et régimes',
-    titre: 'Remboursement de crédit de TVA',
-    description: `Un crédit de TVA peut être remboursé sur demande si son montant est ≥ 760 € (mensuel) ou ≥ 150 € (trimestriel). La demande est formulée via le formulaire n°3519 joint à la déclaration CA3. Le remboursement est effectué sous 30 jours. Un contrôle peut être déclenché pour les remboursements > 15 000 €. Les exportateurs peuvent demander un remboursement mensuel sans seuil minimum.`,
-    statut: 'Active', priorite: 'Haute', type_regle: 'Légale',
-    tags: 'TVA, crédit, remboursement, 3519, 760€, exportateur',
-    source: 'CGI art. 271 V — BOFiP TVA-DED-50-20', fichier: 'src/tax/VatRefundService.java', ecran: 'Espace professionnel — remboursement TVA',
+    tags: 'pièces justificatives, comptable, paiement, service fait, responsabilité, PJ',
+    source: 'Décret 2016-33 — Instruction M57 — CGCT art. L1617-2', fichier: 'src/facturation/PiecesJustifService.java', ecran: 'Validation facture — PJ',
   },
 
   // ══════════════════════════════════════════════════════
-  //  Impôt sur le Revenu
+  //  BUDGET M57
   // ══════════════════════════════════════════════════════
   {
-    code: 'RG-023', groupe: 'Impôt sur le Revenu',
-    titre: 'Barème progressif de l\'impôt sur le revenu 2024',
-    description: `Le barème progressif de l'IR 2024 (revenus 2023) est le suivant par tranche de revenu net imposable par part de quotient familial : 0 % jusqu'à 11 294 € ; 11 % de 11 294 € à 28 797 € ; 30 % de 28 797 € à 82 341 € ; 41 % de 82 341 € à 177 106 € ; 45 % au-delà de 177 106 €. Le barème est revalorisé chaque année en fonction de l'inflation.`,
+    code: 'RG-025', groupe: 'Budget M57 — Règles budgétaires',
+    titre: 'Débat d\'Orientation Budgétaire (DOB) obligatoire',
+    description: `Les communes de plus de 3 500 habitants, les EPCI à fiscalité propre, les départements et les régions doivent organiser un débat d'orientation budgétaire (DOB) dans les 2 mois précédant l'examen du budget primitif. Ce débat porte sur les orientations budgétaires de l'exercice à venir et les engagements pluriannuels. Il donne lieu à une délibération dont la tenue constitue une condition de légalité du budget. Les collectivités < 3 500 habitants ne sont pas soumises à cette obligation.`,
+    statut: 'Active', priorite: 'Haute', type_regle: 'Légale',
+    tags: 'DOB, orientation budgétaire, 3500 habitants, délibération, budget primitif',
+    source: 'CGCT art. L2312-1 et L3312-1 — Loi NOTRe 2015', fichier: '', ecran: 'Préparation budget',
+  },
+  {
+    code: 'RG-026', groupe: 'Budget M57 — Règles budgétaires',
+    titre: 'Vote du budget primitif avant le 15 avril',
+    description: `Le budget primitif doit être voté avant le 15 avril de l'exercice budgétaire (sauf année de renouvellement du conseil, délai porté au 30 juin). Si le budget n'est pas voté à temps, le préfet peut saisir la chambre régionale des comptes. En l'absence de budget voté au 1er janvier, la collectivité peut engager des dépenses de fonctionnement dans la limite de 1/12e mensuel des crédits votés l'année précédente, et des dépenses d'investissement jusqu'à 1/4 du montant ouvert l'exercice précédent.`,
     statut: 'Active', priorite: 'Critique', type_regle: 'Légale',
-    tags: 'IR, barème, tranches, progressif, 11%, 30%, 41%, 45%',
-    source: 'CGI art. 197 — Loi de finances 2024 — BOFiP IR-LIQ-10', fichier: 'src/tax/IncomeTaxCalculator.java', ecran: 'Simulateur impôt — impots.gouv.fr',
+    tags: 'budget primitif, 15 avril, vote, préfet, CRC, 1/12, investissement',
+    source: 'CGCT art. L1612-2 et L1612-12 — Instruction M57', fichier: '', ecran: 'Préparation budget',
   },
   {
-    code: 'RG-024', groupe: 'Impôt sur le Revenu',
-    titre: 'Quotient familial — Plafonnement de l\'avantage',
-    description: `L'avantage fiscal procuré par chaque demi-part supplémentaire est plafonné. En 2024, le plafond est fixé à 1 759 € par demi-part au-delà de 2 parts (couple) ou de 1 part (personne seule). Des plafonnements spécifiques s'appliquent pour les parents isolés (3 956 €) et les anciens combattants. Si le plafonnement est atteint, l'impôt est calculé avec le nombre de parts plafonné.`,
-    statut: 'Active', priorite: 'Haute', type_regle: 'Légale',
-    tags: 'IR, quotient familial, demi-part, plafonnement, 1759€',
-    source: 'CGI art. 197 — BOFiP IR-LIQ-10-20', fichier: 'src/tax/FamilyQuotientCalculator.java', ecran: '',
-  },
-  {
-    code: 'RG-025', groupe: 'Impôt sur le Revenu',
-    titre: 'Décote de l\'impôt sur le revenu',
-    description: `La décote s'applique lorsque l'impôt brut est inférieur à 1 840 € (personne seule) ou 3 045 € (couple soumis à imposition commune). Le montant de la décote est : 833 € – 45,25 % de l'impôt brut (célibataire) ou 1 378 € – 45,25 % de l'impôt brut (couple). La décote ne peut pas aboutir à un impôt négatif.`,
-    statut: 'Active', priorite: 'Haute', type_regle: 'Légale',
-    tags: 'IR, décote, faibles revenus, 833€, 45.25%',
-    source: 'CGI art. 197 I-4 — BOFiP IR-LIQ-20-10', fichier: 'src/tax/IncomeTaxCalculator.java', ecran: '',
-  },
-  {
-    code: 'RG-026', groupe: 'Impôt sur le Revenu',
-    titre: 'Délais de déclaration des revenus par zone géographique',
-    description: `La déclaration de revenus en ligne est obligatoire (sauf impossibilité d'accès internet). Les délais sont fixés chaque année en mai par zone : Zone 1 (dép. 01-19 + non-résidents) : fin mai environ ; Zone 2 (dép. 20-54) : début juin ; Zone 3 (dép. 55-976) : mi-juin. La déclaration papier doit être déposée à la date de la Zone 1. Le cachet de la Poste fait foi pour les envois postaux.`,
+    code: 'RG-027', groupe: 'Budget M57 — Règles budgétaires',
+    titre: 'Règle d\'équilibre réel du budget',
+    description: `Le budget d'une collectivité territoriale doit être voté en équilibre réel : les recettes et les dépenses de chaque section (fonctionnement et investissement) doivent être évaluées de façon sincère. Le remboursement de la dette en capital ne peut être financé que par des ressources propres (recettes définitives). Le budget n'est pas en équilibre réel si le prélèvement sur les résultats ou le recours à l'emprunt couvre des dépenses de fonctionnement. La CRC peut être saisie en cas de budget insincère.`,
     statut: 'Active', priorite: 'Critique', type_regle: 'Légale',
-    tags: 'IR, déclaration, délai, zone, télédéclaration, papier',
-    source: 'CGI art. 175 — BOFiP IR-DECLA-10-10', fichier: '', ecran: 'Déclaration en ligne — impots.gouv.fr',
+    tags: 'équilibre, budget, sincérité, CRC, fonctionnement, investissement, dette',
+    source: 'CGCT art. L1612-4 — Instruction M57 titre 1', fichier: '', ecran: 'Contrôle budgétaire',
   },
   {
-    code: 'RG-027', groupe: 'Impôt sur le Revenu',
-    titre: 'Obligation de télédéclaration',
-    description: `Depuis 2019, tous les contribuables disposant d'un accès internet sont tenus de déclarer leurs revenus en ligne sur impots.gouv.fr. Les exceptions autorisées à la déclaration papier : première déclaration, résidence principale sans internet, zone blanche mobile, incapacité à utiliser le service numérique. En cas de non-respect de l'obligation, une amende forfaitaire de 15 € par déclaration peut être appliquée.`,
-    statut: 'Active', priorite: 'Haute', type_regle: 'Légale',
-    tags: 'IR, télédéclaration, obligation, internet, amende, 15€',
-    source: 'CGI art. 1649 quater B quater — BOFiP IR-DECLA-10-20', fichier: '', ecran: 'Déclaration en ligne — impots.gouv.fr',
-  },
-
-  // ══════════════════════════════════════════════════════
-  //  Prélèvement à la Source
-  // ══════════════════════════════════════════════════════
-  {
-    code: 'RG-028', groupe: 'Prélèvement à la source',
-    titre: 'Obligation de l\'employeur — Collecte et reversement du PAS',
-    description: `L'employeur collecteur a trois obligations : (1) Appliquer le taux transmis par la DGFiP via la DSN dans un délai de 60 jours après mise à disposition. (2) Retenir le PAS sur le salaire net imposable versé. (3) Reverser le PAS prélevé le mois suivant via la DSN, déposée le 5 ou 15 du mois. Les entreprises de moins de 11 salariés peuvent reverser trimestriellement sur option.`,
-    statut: 'Active', priorite: 'Critique', type_regle: 'Légale',
-    tags: 'PAS, prélèvement, employeur, DSN, reversement, 60 jours',
-    source: 'CGI art. 1671 — BOFiP IR-PAS-20', fichier: 'src/payroll/PasCollectionService.java', ecran: '',
-  },
-  {
-    code: 'RG-029', groupe: 'Prélèvement à la source',
-    titre: 'Taux personnalisé, individualisé et neutre du PAS',
-    description: `Trois types de taux PAS coexistent : (1) Taux personnalisé (taux foyer) : calculé par la DGFiP sur la base du dernier avis d'imposition, appliqué par défaut. (2) Taux individualisé : chaque conjoint a son propre taux (dispositif activé automatiquement depuis le 01/09/2025 pour les couples). (3) Taux neutre (barème) : appliqué en l'absence de taux communiqué ou si le salarié refuse la transmission. Le taux neutre est non personnalisé et basé sur un barème publié par la DGFiP.`,
-    statut: 'Active', priorite: 'Haute', type_regle: 'Légale',
-    tags: 'PAS, taux, personnalisé, individualisé, neutre, couple',
-    source: 'CGI art. 204 H — BOFiP IR-PAS-30-10', fichier: 'src/payroll/PasRateService.java', ecran: 'Espace particulier — gérer mon taux',
-  },
-  {
-    code: 'RG-030', groupe: 'Prélèvement à la source',
-    titre: 'Modulation à la hausse ou à la baisse du PAS',
-    description: `Le contribuable peut moduler son taux PAS si l'écart entre le prélèvement en cours et l'impôt estimé est > 10 % et > 200 €. La modulation à la baisse est possible sur estimation de l'impôt de l'année en cours. En cas d'erreur sur l'estimation (insuffisance > 10 % et > 200 €), une majoration de 10 % s'applique sur la différence entre le PAS minoré et le PAS théorique.`,
+    code: 'RG-028', groupe: 'Budget M57 — Règles budgétaires',
+    titre: 'Dépenses imprévues plafonnées à 7,5 % des crédits de la section',
+    description: `Les crédits pour dépenses imprévues inscrites au budget ne peuvent excéder 7,5 % des dépenses réelles prévisionnelles de chaque section (fonctionnement et investissement). Ces crédits permettent à l'exécutif de faire face à des dépenses urgentes et non prévues entre deux séances de l'assemblée délibérante. Leur utilisation est retracée dans le compte administratif. Ils ne constituent pas une enveloppe globale mais doivent être ventilés en fin d'exercice.`,
     statut: 'Active', priorite: 'Normale', type_regle: 'Légale',
-    tags: 'PAS, modulation, taux, majoration, 10%, 200€',
-    source: 'CGI art. 204 J — BOFiP IR-PAS-30-20', fichier: '', ecran: 'Espace particulier — moduler mon prélèvement',
-  },
-
-  // ══════════════════════════════════════════════════════
-  //  Impôt sur les Sociétés
-  // ══════════════════════════════════════════════════════
-  {
-    code: 'RG-031', groupe: 'Impôt sur les Sociétés',
-    titre: 'Taux normal de l\'impôt sur les sociétés',
-    description: `Depuis 2022, le taux normal de l'IS est fixé à 25 % pour toutes les entreprises, quelle que soit leur taille. Ce taux s'applique sur le bénéfice fiscal net de l'exercice après déduction des déficits reportables. Il a été réduit progressivement : 33,1/3 % en 2018, 28 % en 2020, 26,5 % en 2021, 25 % depuis 2022.`,
-    statut: 'Active', priorite: 'Critique', type_regle: 'Légale',
-    tags: 'IS, taux normal, 25%, bénéfice, impôt sociétés',
-    source: 'CGI art. 219 — BOFiP IS-LIQ-20-10', fichier: 'src/tax/CorporateTaxCalculator.java', ecran: '',
+    tags: 'dépenses imprévues, 7.5%, crédits, fonctionnement, investissement, exécutif',
+    source: 'CGCT art. L2322-1 — Instruction M57 § 2.3.2', fichier: '', ecran: 'Préparation budget',
   },
   {
-    code: 'RG-032', groupe: 'Impôt sur les Sociétés',
-    titre: 'Taux réduit d\'IS pour les PME',
-    description: `Les PME remplissant les conditions suivantes bénéficient d'un taux réduit de 15 % sur les 42 500 premiers euros de bénéfice : CA HT < 10 M€, capital libéré et détenu à 75 % au moins par des personnes physiques, soumises à l'IS. Au-delà de 42 500 €, le taux normal de 25 % s'applique. Le seuil de 42 500 € est proratisé si l'exercice < 12 mois.`,
+    code: 'RG-029', groupe: 'Budget M57 — Règles budgétaires',
+    titre: 'Clôture de l\'exercice comptable au 31 janvier N+1',
+    description: `En comptabilité publique M57, l'exercice budgétaire se clôture le 31 décembre N mais la période complémentaire s'étend jusqu'au 31 janvier N+1. Durant cette période complémentaire, les mandats et titres rattachés à l'exercice N peuvent encore être émis (reports de l'exercice antérieur, régularisations). Au-delà du 31 janvier, toute opération est rattachée à l'exercice N+1. Le compte de gestion du comptable et le compte administratif de l'ordonnateur doivent être concordants.`,
     statut: 'Active', priorite: 'Haute', type_regle: 'Légale',
-    tags: 'IS, taux réduit, PME, 15%, 42500€, capital',
-    source: 'CGI art. 219 I b — BOFiP IS-LIQ-20-20', fichier: 'src/tax/CorporateTaxCalculator.java', ecran: '',
+    tags: 'clôture exercice, 31 janvier, période complémentaire, M57, compte administratif',
+    source: 'Instruction M57 — CGCT art. L2342-1', fichier: 'src/budget/ClotureExerciceService.java', ecran: 'Clôture — période complémentaire',
   },
   {
-    code: 'RG-033', groupe: 'Impôt sur les Sociétés',
-    titre: 'Acomptes d\'IS — Calendrier et calcul',
-    description: `Les entreprises redevables de l'IS versent 4 acomptes aux dates fixes : 15 mars, 15 juin, 15 septembre, 15 décembre. Chaque acompte est égal à 1/4 de l'IS de l'exercice précédent (ou avant-dernier pour le 1er acompte). Les entreprises dont l'IS ≤ 3 000 € sont dispensées. Les sociétés nouvelles sont dispensées lors du premier exercice. La régularisation est effectuée au plus tard le 15 du 4e mois suivant la clôture.`,
-    statut: 'Active', priorite: 'Critique', type_regle: 'Légale',
-    tags: 'IS, acomptes, 15 mars, 15 juin, 15 septembre, 15 décembre, 3000€',
-    source: 'CGI art. 1668 — BOFiP IS-DECLA-20-10', fichier: 'src/tax/CorporateTaxInstalmentsService.java', ecran: 'Espace professionnel — paiement IS',
-  },
-  {
-    code: 'RG-034', groupe: 'Impôt sur les Sociétés',
-    titre: 'Majoration du dernier acompte IS pour grandes entreprises',
-    description: `Les entreprises dont le CA est ≥ 250 M€ sont soumises à une majoration du dernier acompte d'IS. Leur dernier acompte doit représenter au minimum : 80 % de l'IS de l'exercice si CA ≥ 250 M€ et < 1 Md€ ; 90 % si CA ≥ 1 Md€ et < 5 Md€ ; 95 % si CA ≥ 5 Md€. Cette règle vise à aligner l'IS payé en cours d'exercice avec l'IS réellement dû.`,
-    statut: 'Active', priorite: 'Haute', type_regle: 'Légale',
-    tags: 'IS, acompte, grande entreprise, 250M€, 80%, 90%, 95%',
-    source: 'CGI art. 1668 — BOFiP IS-DECLA-20-10-20', fichier: 'src/tax/CorporateTaxInstalmentsService.java', ecran: '',
-  },
-  {
-    code: 'RG-035', groupe: 'Impôt sur les Sociétés',
-    titre: 'Report en avant et en arrière des déficits (IS)',
-    description: `Les déficits fiscaux d'une société soumise à l'IS peuvent être reportés en avant sans limite de durée, mais plafonnés à 1 M€ + 50 % du bénéfice dépassant 1 M€ par exercice. Le report en arrière (carry-back) est limité au déficit de l'exercice, à l'IS de l'exercice précédent, et au bénéfice de cet exercice. La créance de carry-back est remboursée après 5 ans si non imputée.`,
-    statut: 'Active', priorite: 'Haute', type_regle: 'Légale',
-    tags: 'IS, déficit, report, carry-back, 1M€, 50%, imputation',
-    source: 'CGI art. 209 et 220 quinquies — BOFiP IS-DEF', fichier: 'src/tax/DeficitCarryService.java', ecran: '',
-  },
-
-  // ══════════════════════════════════════════════════════
-  //  Fiscalité locale — CFE / CVAE
-  // ══════════════════════════════════════════════════════
-  {
-    code: 'RG-036', groupe: 'Fiscalité locale — CFE / CVAE',
-    titre: 'Cotisation Foncière des Entreprises — Redevables et base',
-    description: `La CFE est due par toute personne physique ou morale exerçant une activité professionnelle non salariée à titre habituel en France au 1er janvier de l'année d'imposition. La base est la valeur locative des biens immobiliers utilisés pour l'activité au cours de la période de référence (N-2). Les entreprises nouvelles sont exonérées la première année. La CFE est due à la commune d'implantation.`,
-    statut: 'Active', priorite: 'Haute', type_regle: 'Légale',
-    tags: 'CFE, cotisation foncière, entreprise, valeur locative, commune',
-    source: 'CGI art. 1447 à 1478 — BOFiP IF-CFE-10', fichier: '', ecran: 'Espace professionnel — CFE',
-  },
-  {
-    code: 'RG-037', groupe: 'Fiscalité locale — CFE / CVAE',
-    titre: 'CFE — Cotisation minimum et exonération micro',
-    description: `Une cotisation minimum est due même si la base d'imposition est faible. Son montant varie de 237 € à 7 349 € selon le CA ou les recettes de l'entreprise (barème communal). Les entreprises dont le CA annuel est ≤ 5 000 € sont exonérées de cotisation minimum. La date limite de paiement est fixée au 16 décembre chaque année. Le paiement s'effectue obligatoirement par voie dématérialisée pour les professionnels.`,
+    code: 'RG-030', groupe: 'Budget M57 — Règles budgétaires',
+    titre: 'Virements de crédits entre chapitres — Délégation à l\'exécutif',
+    description: `Les virements de crédits entre chapitres différents relèvent en principe de l'assemblée délibérante. Toutefois, celle-ci peut déléguer à l'exécutif (maire, président) la capacité de procéder à des virements entre chapitres dans la limite de 7,5 % des crédits votés de chaque chapitre. Les virements entre nature de dépenses à l'intérieur d'un même chapitre relèvent de la seule compétence de l'exécutif, sans limitation. Toute délégation doit faire l'objet d'une délibération.`,
     statut: 'Active', priorite: 'Normale', type_regle: 'Légale',
-    tags: 'CFE, cotisation minimum, 5000€, 16 décembre, dématérialisé',
-    source: 'CGI art. 1647 D — BOFiP IF-CFE-20-20', fichier: '', ecran: 'Espace professionnel — CFE',
-  },
-  {
-    code: 'RG-038', groupe: 'Fiscalité locale — CFE / CVAE',
-    titre: 'Suppression de la CVAE et calendrier',
-    description: `La Cotisation sur la Valeur Ajoutée des Entreprises (CVAE) est supprimée en deux étapes : taux divisé par 2 en 2023 (0,125 % au lieu de 0,25 %), puis suppression totale en 2024. Les entreprises dont le CA > 500 000 € n'ont donc plus à déposer de déclaration n°1329-DEF à compter de la liasse fiscale 2024. La CET (CFE + CVAE) est remplacée par la seule CFE à partir de 2024.`,
-    statut: 'Active', priorite: 'Haute', type_regle: 'Légale',
-    tags: 'CVAE, suppression, 2024, CET, CFE, 500000€',
-    source: 'Loi de finances 2023 art. 55 — BOFiP IF-CVAE', fichier: '', ecran: '',
+    tags: 'virement, crédits, chapitre, délégation, exécutif, 7.5%, délibération',
+    source: 'CGCT art. L2311-7 — Instruction M57 § 2.4', fichier: '', ecran: 'Gestion budgétaire — virements',
   },
 
   // ══════════════════════════════════════════════════════
-  //  Pénalités et Majorations
+  //  IMMOBILISATIONS — Instruction M57
   // ══════════════════════════════════════════════════════
   {
-    code: 'RG-039', groupe: 'Pénalités et majorations',
-    titre: 'Intérêt de retard — Taux et application',
-    description: `L'intérêt de retard s'applique à toute insuffisance ou retard de paiement d'impôt. Le taux est de 0,20 % par mois (soit 2,4 % annuel). Il court à partir du 1er jour du mois suivant celui au cours duquel l'impôt devait être acquitté jusqu'au dernier jour du mois de régularisation. L'intérêt de retard se cumule avec les majorations. Il n'est pas déduit du résultat fiscal.`,
+    code: 'RG-031', groupe: 'Immobilisations — Comptabilité patrimoniale',
+    titre: 'Seuil d\'immobilisation — Biens < 500 € comptabilisés en charges',
+    description: `En instruction M57, les biens d'une valeur unitaire inférieure à 500 € HT peuvent être comptabilisés directement en charges (compte 606 — achats non stockés) plutôt qu'immobilisés. Au-delà de 500 € HT, le bien est inscrit à l'actif du bilan (comptes 21xx) et soumis à amortissement. La collectivité peut décider d'un seuil plus élevé par délibération, dans la limite de 1 000 € HT pour les communes de moins de 3 500 habitants.`,
+    statut: 'Active', priorite: 'Haute', type_regle: 'Fonctionnelle',
+    tags: 'immobilisation, seuil, 500€, charges, actif, amortissement, M57',
+    source: 'Instruction M57 — Tome 2 — Plan de comptes', fichier: 'src/patrimoine/ImmobilisationService.java', ecran: 'Saisie immobilisation',
+  },
+  {
+    code: 'RG-032', groupe: 'Immobilisations — Comptabilité patrimoniale',
+    titre: 'Durées d\'amortissement réglementaires en M57',
+    description: `L'instruction M57 fixe des durées d'amortissement minimales selon la nature des biens : bâtiments administratifs 40 ans, bâtiments à usage industriel 20 ans, voiries 30 ans, réseaux 30-40 ans, matériel roulant 5 ans, matériel de bureau et informatique 3-5 ans, logiciels 3 ans, mobilier 10 ans. L'amortissement est calculé selon le mode linéaire. Le mode dégressif est autorisé pour certains biens. Les collectivités de moins de 3 500 habitants et les SDIS ne sont pas obligatoirement soumis à l'amortissement.`,
+    statut: 'Active', priorite: 'Haute', type_regle: 'Légale',
+    tags: 'amortissement, durée, bâtiment, voirie, informatique, linéaire, M57',
+    source: 'Instruction M57 — CGCT art. R2321-1 — Décret 2005-1661', fichier: 'src/patrimoine/AmortissementService.java', ecran: 'Calcul amortissements',
+  },
+  {
+    code: 'RG-033', groupe: 'Immobilisations — Comptabilité patrimoniale',
+    titre: 'Inventaire du patrimoine — Obligation de tenue',
+    description: `Chaque collectivité territoriale doit tenir un inventaire de ses biens immobiliers et mobiliers. Cet inventaire, tenu par l'ordonnateur, doit être concordant avec l'état de l'actif tenu par le comptable public. Il recense pour chaque bien : la nature, la date d'acquisition, le coût d'acquisition ou de production, la durée et le montant des amortissements cumulés, la valeur nette comptable. L'inventaire physique doit être rapproché annuellement de l'actif comptable. Le préfet peut demander sa communication.`,
+    statut: 'Active', priorite: 'Haute', type_regle: 'Légale',
+    tags: 'inventaire, patrimoine, biens, ordonnateur, comptable, concordance, actif',
+    source: 'CGCT art. L2241-1 — Instruction M57 Tome 2 — Circulaire 2003', fichier: 'src/patrimoine/InventaireService.java', ecran: 'Inventaire patrimoine',
+  },
+  {
+    code: 'RG-034', groupe: 'Immobilisations — Comptabilité patrimoniale',
+    titre: 'Composants d\'une immobilisation — Comptabilisation séparée',
+    description: `En M57, la méthode des composants s'applique aux immobilisations dont certains éléments ont des durées d'utilisation différentes de la structure principale. Exemple : un bâtiment peut être décomposé en structure (50 ans), toiture (25 ans), façades (25 ans), installations techniques (15-20 ans). Chaque composant est alors amorti séparément. Le remplacement d'un composant est immobilisé et l'ancien composant est sorti de l'actif.`,
+    statut: 'Active', priorite: 'Normale', type_regle: 'Fonctionnelle',
+    tags: 'composant, immobilisation, bâtiment, toiture, amortissement, sortie actif',
+    source: 'Instruction M57 Tome 2 § 3.2 — PCG art. 322-2', fichier: 'src/patrimoine/ComposantService.java', ecran: 'Saisie immobilisation — composants',
+  },
+
+  // ══════════════════════════════════════════════════════
+  //  SUBVENTIONS
+  // ══════════════════════════════════════════════════════
+  {
+    code: 'RG-035', groupe: 'Subventions — Attribution et contrôle',
+    titre: 'Convention obligatoire pour les subventions > 23 000 €',
+    description: `Toute subvention accordée par une collectivité territoriale à un organisme de droit privé d'un montant annuel > 23 000 € doit faire l'objet d'une convention. Cette convention précise l'objet, le montant, les conditions d'utilisation, les modalités de contrôle et les obligations de compte-rendu du bénéficiaire. Depuis la loi Egalité et Citoyenneté 2017, la collectivité peut exiger un plan de financement pluriannuel. Le défaut de convention expose la collectivité à un risque d'illégalité.`,
     statut: 'Active', priorite: 'Critique', type_regle: 'Légale',
-    tags: 'pénalité, intérêt retard, 0.20%, 2.4% annuel, majoration',
-    source: 'CGI art. 1727 — BOFiP CF-INF-10-10-10', fichier: 'src/penalty/InterestCalculationService.java', ecran: '',
+    tags: 'subvention, convention, 23000€, organisme, contrôle, compte-rendu',
+    source: 'Loi 2000-321 art. 10 — Décret 2001-495 — CGCT', fichier: 'src/subventions/ConventionService.java', ecran: 'Attribution subvention',
   },
   {
-    code: 'RG-040', groupe: 'Pénalités et majorations',
-    titre: 'Majoration pour retard de déclaration',
-    description: `En cas de retard ou d'absence de déclaration, les majorations sont : 10 % si la déclaration est déposée spontanément en retard ; 20 % si elle est déposée dans les 30 jours suivant une mise en demeure ; 40 % si elle n'est pas déposée dans les 30 jours de la mise en demeure ; 80 % en cas de découverte d'une activité occulte. Ces majorations s'appliquent sur les droits dus, en sus de l'intérêt de retard.`,
+    code: 'RG-036', groupe: 'Subventions — Attribution et contrôle',
+    titre: 'Rapport d\'activité annuel obligatoire pour les subventionnés',
+    description: `Tout organisme bénéficiaire d'une subvention > 153 000 € doit déposer ses comptes annuels (bilan, compte de résultat, annexe) en préfecture et les publier sur son site internet. Pour les subventions entre 23 000 € et 153 000 €, un compte-rendu financier annuel justifiant l'emploi de la subvention doit être transmis à la collectivité dans les 6 mois suivant la fin de l'exercice. L'absence de ce document justifie le refus du renouvellement ou la demande de remboursement.`,
+    statut: 'Active', priorite: 'Haute', type_regle: 'Légale',
+    tags: 'subvention, rapport activité, 153000€, comptes, préfecture, 6 mois',
+    source: 'Loi 2000-321 art. 10 — Décret 2001-495 art. 4 et 5', fichier: 'src/subventions/RapportActiviteService.java', ecran: 'Suivi subventions',
+  },
+  {
+    code: 'RG-037', groupe: 'Subventions — Attribution et contrôle',
+    titre: 'Subvention d\'investissement — Reprise d\'actif et règle de non-cession',
+    description: `Lorsqu'une collectivité attribue une subvention d'investissement à une association ou un organisme pour l'acquisition d'un bien, la convention doit prévoir une clause de retour en cas de cession ou de dissolution dans les 10 ans. Si le bien est cédé avant ce délai, la subvention doit être remboursée prorata temporis. En comptabilité M57, les subventions d'investissement versées sont inscrites dans les comptes 204x (pour les entités publiques) ou 657 (associations) selon la nature du bénéficiaire.`,
+    statut: 'Active', priorite: 'Haute', type_regle: 'Légale',
+    tags: 'subvention investissement, non-cession, 10 ans, remboursement, 204x, clause',
+    source: 'CGCT — Instruction M57 — Jurisprudence CRC', fichier: 'src/subventions/SubventionInvestService.java', ecran: 'Attribution subvention — investissement',
+  },
+  {
+    code: 'RG-038', groupe: 'Subventions — Attribution et contrôle',
+    titre: 'Interdiction de subventionner les partis et groupements politiques',
+    description: `Les collectivités territoriales ne peuvent pas accorder de subventions à des partis ou groupements politiques, ni à des associations ou organismes dont l'objet est de soutenir un candidat ou un parti. Cette interdiction est absolue et s'applique quelle que soit la forme de la subvention (numéraire, nature, mise à disposition gratuite). Toute délibération accordant une telle subvention est illégale et susceptible d'annulation par le juge administratif.`,
     statut: 'Active', priorite: 'Critique', type_regle: 'Légale',
-    tags: 'pénalité, majoration, retard déclaration, 10%, 20%, 40%, 80%, mise en demeure',
-    source: 'CGI art. 1728 et 1729 C bis — BOFiP CF-INF-10-20', fichier: 'src/penalty/PenaltyCalculationService.java', ecran: '',
-  },
-  {
-    code: 'RG-041', groupe: 'Pénalités et majorations',
-    titre: 'Majoration pour retard de paiement',
-    description: `Tout retard de paiement d'un impôt direct (IR, IS, CFE…) est sanctionné par une majoration de 10 % du montant non payé à l'échéance (art. 1730 CGI). Pour certains impôts déclaratifs payés avec dépôt de la déclaration (TVA, retenue à la source), la majoration est de 5 % (art. 1731 CGI), sauf si la déclaration est déposée avec le paiement intégral.`,
-    statut: 'Active', priorite: 'Haute', type_regle: 'Légale',
-    tags: 'pénalité, retard paiement, 10%, 5%, TVA, impôt direct',
-    source: 'CGI art. 1730 et 1731 — BOFiP CF-INF-10-30', fichier: 'src/penalty/PaymentPenaltyService.java', ecran: '',
-  },
-  {
-    code: 'RG-042', groupe: 'Pénalités et majorations',
-    titre: 'Majoration pour manquement délibéré et fraude',
-    description: `En cas de manquement délibéré (mauvaise foi prouvée), la majoration est portée à 40 % des droits éludés. En cas de manœuvres frauduleuses ou d'abus de droit, elle est de 80 %. En cas de flagrance fiscale, la majoration de 40 % peut être appliquée en cours d'exercice. Ces majorations excluent l'application simultanée de la majoration de retard de déclaration.`,
-    statut: 'Active', priorite: 'Haute', type_regle: 'Légale',
-    tags: 'pénalité, fraude, mauvaise foi, 40%, 80%, flagrance, abus de droit',
-    source: 'CGI art. 1729 — BOFiP CF-INF-10-20-20', fichier: 'src/penalty/FraudPenaltyService.java', ecran: '',
+    tags: 'subvention, partis politiques, interdiction, illégalité, juge administratif',
+    source: 'CGCT art. L2252-1 — Jurisprudence CE — CPC électoraux', fichier: '', ecran: 'Attribution subvention',
   },
 
   // ══════════════════════════════════════════════════════
-  //  Crédits et Réductions d'impôt
+  //  PES V2 — Protocole d'Echange Standard
   // ══════════════════════════════════════════════════════
   {
-    code: 'RG-043', groupe: 'Crédits d\'impôt — CIR / CII',
-    titre: 'Crédit d\'Impôt Recherche — Taux et assiette',
-    description: `Le CIR est calculé sur les dépenses de R&D éligibles : 30 % jusqu'à 100 M€, 5 % au-delà. Les dépenses éligibles comprennent : les dépenses de personnel chercheurs/techniciens, les dotations aux amortissements des équipements R&D, les dépenses de fonctionnement (43 % des dépenses de personnel + 75 % des amortissements), les dépenses de sous-traitance (plafonnée à 10 M€ entre entreprises liées) et les dépenses de veille technologique (plafonnée à 60 000 €). Le CIR s'impute sur l'IS ou l'IR dû. Si non imputé sur 3 ans, il est remboursé.`,
-    statut: 'Active', priorite: 'Haute', type_regle: 'Légale',
-    tags: 'CIR, crédit impôt recherche, 30%, 5%, 100M€, R&D, personnel',
-    source: 'CGI art. 244 quater B — BOFiP BIC-RICI-10-10', fichier: 'src/tax/ResearchTaxCreditService.java', ecran: 'Espace professionnel — CIR',
-  },
-  {
-    code: 'RG-044', groupe: 'Crédits d\'impôt — CIR / CII',
-    titre: 'Crédit d\'Impôt Innovation (CII) pour PME',
-    description: `Le CII est réservé aux PME (CA < 50 M€ ou bilan < 43 M€, < 250 salariés). Il porte sur les dépenses d'innovation (conception de prototypes, installations pilotes, design non éligibles au CIR). Le taux est de 20 % (30 % en Corse et DOM) sur une assiette plafonnée à 400 000 € par an, soit un crédit maximum de 80 000 €. Le CII est cumulable avec le CIR si les dépenses sont distinctes.`,
-    statut: 'Active', priorite: 'Normale', type_regle: 'Légale',
-    tags: 'CII, crédit innovation, PME, 20%, 400000€, prototype, design',
-    source: 'CGI art. 244 quater B II k — BOFiP BIC-RICI-10-10-30', fichier: 'src/tax/InnovationTaxCreditService.java', ecran: '',
-  },
-  {
-    code: 'RG-045', groupe: 'Crédits d\'impôt — CIR / CII',
-    titre: 'Rescrit fiscal CIR — Sécurisation juridique',
-    description: `Avant d'engager des dépenses de R&D, une entreprise peut demander un rescrit CIR à la DGFiP (via le MESRI pour l'éligibilité des travaux). La réponse est opposable à l'administration pendant 3 ans. En l'absence de réponse dans les 3 mois, le silence vaut accord tacite. Le rescrit ne garantit que l'éligibilité des projets décrits, pas les montants déclarés.`,
-    statut: 'Active', priorite: 'Normale', type_regle: 'Légale',
-    tags: 'CIR, rescrit, sécurisation, MESRI, 3 mois, accord tacite',
-    source: 'LPF art. L 80 B 3° — BOFiP BIC-RICI-10-10-40', fichier: '', ecran: 'Espace professionnel — rescrit fiscal',
-  },
-
-  // ══════════════════════════════════════════════════════
-  //  Contrôle fiscal
-  // ══════════════════════════════════════════════════════
-  {
-    code: 'RG-046', groupe: 'Contrôle fiscal et prescription',
-    titre: 'Délai général de reprise de l\'administration fiscale',
-    description: `Le droit de reprise de l'administration fiscale s'exerce jusqu'au 31 décembre de la 3e année suivant celle au titre de laquelle l'imposition est due (délai de droit commun). Le délai est porté à 6 ans en cas d'activité occulte ou de non-respect d'obligations déclaratives formelles. En cas de fraude fiscale caractérisée, le délai est de 10 ans. Ces délais courent à partir du 1er janvier de l'année suivant celle du fait générateur.`,
-    statut: 'Active', priorite: 'Haute', type_regle: 'Légale',
-    tags: 'contrôle, prescription, reprise, 3 ans, 6 ans, 10 ans, fraude',
-    source: 'LPF art. L 169 — BOFiP CF-PGR-10-40', fichier: '', ecran: '',
-  },
-  {
-    code: 'RG-047', groupe: 'Contrôle fiscal et prescription',
-    titre: 'Vérification de comptabilité — Droits et obligations',
-    description: `Lors d'une vérification de comptabilité, l'entreprise doit : présenter les documents comptables pour les 3 exercices non prescrits, permettre l'accès aux données informatiques (FEC obligatoire au format DGFiP), permettre l'accès aux locaux professionnels. Le vérificateur doit remettre un avis de vérification au moins 2 jours ouvrés avant la première intervention. La vérification ne peut excéder 3 mois pour les PME (CA < seuils régime simplifié).`,
-    statut: 'Active', priorite: 'Haute', type_regle: 'Légale',
-    tags: 'vérification, comptabilité, FEC, avis, 2 jours, 3 mois, PME',
-    source: 'LPF art. L 13 — BOFiP CF-IOR-60-10', fichier: 'src/audit/FecExportService.java', ecran: '',
-  },
-  {
-    code: 'RG-048', groupe: 'Contrôle fiscal et prescription',
-    titre: 'Fichier des Écritures Comptables (FEC)',
-    description: `Toute entreprise soumise à obligation comptable doit pouvoir fournir un FEC (Fichier des Écritures Comptables) lors d'un contrôle fiscal. Le FEC doit respecter le format défini par l'arrêté du 29 juillet 2013 : 18 champs obligatoires, encodage UTF-8 ou ISO-8859-1, séparateur tabulation ou pipe, nomenclature des colonnes standardisée (JournalCode, EcritureDate, etc.). Un FEC non conforme entraîne une amende de 5 000 € ou une majoration de 10 % des droits.`,
+    code: 'RG-039', groupe: 'PES V2 — Protocole d\'Echange Standard',
+    titre: 'PES V2 — Généralisation obligatoire depuis 2015',
+    description: `Le Protocole d'Echange Standard version 2 (PES V2) est obligatoire pour tous les échanges dématérialisés entre les ordonnateurs (collectivités) et les comptables (trésoreries) depuis le 1er janvier 2015. Il remplace le protocole INDIGO. Le PES V2 est le format unique d'échange avec Hélios, l'application de la DGFiP pour la gestion comptable publique. La transmission des flux s'effectue via TIPI, la plateforme d'échange de la DGFiP.`,
     statut: 'Active', priorite: 'Critique', type_regle: 'Technique',
-    tags: 'FEC, comptabilité, format, UTF-8, 18 champs, 5000€, arrêté 2013',
-    source: 'Arrêté du 29/07/2013 — CGI art. 1729 E — BOFiP CF-IOR-60-40', fichier: 'src/audit/FecExportService.java', ecran: '',
-  },
-
-  // ══════════════════════════════════════════════════════
-  //  Déclarations et obligations
-  // ══════════════════════════════════════════════════════
-  {
-    code: 'RG-049', groupe: 'Déclarations et obligations',
-    titre: 'Déclaration annuelle des revenus de capitaux mobiliers (IFU)',
-    description: `Les établissements payeurs (banques, assurances, sociétés) doivent déclarer à la DGFiP les revenus de capitaux mobiliers versés à leurs clients via l'Imprimé Fiscal Unique (IFU / formulaire 2561). La déclaration est déposée avant le 15 février de l'année suivant le versement. Les données sont pré-remplies dans la déclaration de revenus des bénéficiaires.`,
-    statut: 'Active', priorite: 'Haute', type_regle: 'Légale',
-    tags: 'IFU, revenus capitaux, 2561, établissement payeur, pré-remplissage, 15 février',
-    source: 'CGI art. 242 ter — BOFiP RPPM-RCM-40', fichier: 'src/declarations/IfuDeclarationService.java', ecran: 'Espace professionnel — déclarations tiers',
+    tags: 'PES V2, Hélios, TIPI, dématérialisation, comptable, ordonnateur, INDIGO',
+    source: 'Circulaire DGFiP 2013 — Instruction M57 — DGFIP Hélios', fichier: 'src/pes/PesV2Service.java', ecran: 'Envoi flux PES',
   },
   {
-    code: 'RG-050', groupe: 'Déclarations et obligations',
-    titre: 'Taxe sur les salaires — Règles et exonérations',
-    description: `La taxe sur les salaires est due par les employeurs non assujettis à la TVA sur 90 % au moins de leur CA (associations, établissements de santé, banques). Elle est calculée sur les rémunérations brutes versées avec un barème progressif : 4,25 % jusqu'à 8 572 €, 8,50 % de 8 572 € à 17 144 €, 13,60 % au-delà (majoré à 20 % pour la fraction > 152 122 €). Les PME dont la taxe calculée est ≤ 1 200 € sont exonérées via la franchise.`,
-    statut: 'Active', priorite: 'Normale', type_regle: 'Légale',
-    tags: 'taxe salaires, 4.25%, 8.50%, 13.60%, association, franchise, 1200€',
-    source: 'CGI art. 231 — BOFiP TPS-TS-10', fichier: 'src/tax/PayrollTaxService.java', ecran: '',
+    code: 'RG-040', groupe: 'PES V2 — Protocole d\'Echange Standard',
+    titre: 'PES V2 — Structure des flux XML',
+    description: `Le PES V2 définit plusieurs types de flux XML structurés selon le schéma XSD DGFiP : PES_Aller (dépenses) contient les mandats de paiement avec les pièces justificatives ; PES_Retour contient les accusés de réception et les rejets du comptable. Chaque flux est encapsulé dans une enveloppe Bordereau avec un en-tête (BordEnTete) identifiant l'émetteur (SIRET), le destinataire, le numéro d'exercice et la date d'émission. La signature électronique de l'enveloppe est obligatoire pour les flux PES_Aller.`,
+    statut: 'Active', priorite: 'Critique', type_regle: 'Technique',
+    tags: 'PES V2, XML, XSD, PES_Aller, PES_Retour, mandat, SIRET, signature',
+    source: 'Schéma XSD DGFiP — Documentation technique PES V2 v5.0', fichier: 'src/pes/PesV2Serializer.java', ecran: '',
   },
   {
-    code: 'RG-051', groupe: 'Déclarations et obligations',
-    titre: 'Échange automatique d\'informations — DAC6',
-    description: `Les intermédiaires (conseillers fiscaux, avocats, banques) et à défaut les contribuables eux-mêmes doivent déclarer à la DGFiP les montages transfrontaliers potentiellement agressifs entrant dans les marqueurs DAC6. Le délai de déclaration est de 30 jours à compter de la mise à disposition du montage. Les déclarations sont transmises à la DGFiP via l'espace professionnel. Les sanctions en cas de manquement vont jusqu'à 10 000 €.`,
-    statut: 'Active', priorite: 'Haute', type_regle: 'Légale',
-    tags: 'DAC6, montage, transfrontalier, intermédiaire, 30 jours, 10000€',
-    source: 'CGI art. 1649 AD — Directive UE 2018/822 — BOFiP CF-CPF-30-40', fichier: '', ecran: 'Espace professionnel — DAC6',
-  },
-
-  // ══════════════════════════════════════════════════════
-  //  Plus-values
-  // ══════════════════════════════════════════════════════
-  {
-    code: 'RG-052', groupe: 'Plus-values et cessions',
-    titre: 'Plus-values mobilières des particuliers — Flat tax',
-    description: `Les plus-values de cession de valeurs mobilières réalisées par les particuliers sont soumises par défaut au Prélèvement Forfaitaire Unique (PFU) de 30 % : 12,8 % d'IR + 17,2 % de prélèvements sociaux. Sur option globale et irrévocable pour l'année, le contribuable peut choisir l'imposition au barème progressif (avec abattements pour durée de détention sur titres acquis avant 2018). L'option est exercée lors de la déclaration de revenus.`,
-    statut: 'Active', priorite: 'Haute', type_regle: 'Légale',
-    tags: 'plus-value, PFU, flat tax, 30%, 12.8%, valeurs mobilières, abattement',
-    source: 'CGI art. 150-0 A et 200 A — BOFiP RPPM-PVBMI-20', fichier: 'src/tax/CapitalGainsTaxService.java', ecran: '',
+    code: 'RG-041', groupe: 'PES V2 — Protocole d\'Echange Standard',
+    titre: 'PES V2 — Pièces justificatives dématérialisées (PJ)',
+    description: `Le PES V2 permet la dématérialisation des pièces justificatives (PJ). Les PJ sont jointes en annexe du flux PES_Aller au format PDF/A (archivage). Chaque PJ est identifiée par un identifiant unique, son type (selon la nomenclature réglementaire) et son empreinte numérique (hash SHA-256). La collectivité doit conserver les PJ originales pendant 10 ans. Si les PJ sont dématérialisées, leur authenticité et intégrité doivent être garanties (signature ou horodatage).`,
+    statut: 'Active', priorite: 'Haute', type_regle: 'Technique',
+    tags: 'PES V2, PJ, pièces justificatives, PDF/A, SHA-256, conservation, 10 ans',
+    source: 'Décret 2016-33 — Documentation PES V2 — DGFiP circulaire 2015', fichier: 'src/pes/PjAttachmentService.java', ecran: 'Gestion PJ',
   },
   {
-    code: 'RG-053', groupe: 'Plus-values et cessions',
-    titre: 'Plus-values immobilières — Exonérations et abattements',
-    description: `La plus-value immobilière des particuliers est exonérée pour la résidence principale. Pour les autres biens, un abattement pour durée de détention s'applique : IR : 6 % par an entre la 6e et la 21e année, 4 % la 22e année → exonération totale après 22 ans ; Prélèvements sociaux : 1,65 % de la 6e à la 21e, 1,60 % la 22e, 9 % de la 23e à la 30e → exonération totale après 30 ans. La plus-value nette est imposée à 19 % + 17,2 % PS.`,
-    statut: 'Active', priorite: 'Haute', type_regle: 'Légale',
-    tags: 'plus-value immobilière, résidence principale, abattement, 22 ans, 30 ans, 19%',
-    source: 'CGI art. 150 U à 150 VH — BOFiP RFPI-PVI-10', fichier: 'src/tax/RealEstateGainsTaxService.java', ecran: '',
+    code: 'RG-042', groupe: 'PES V2 — Protocole d\'Echange Standard',
+    titre: 'PES V2 — Flux recettes : émission et titres de recettes',
+    description: `Pour les recettes, l'ordonnateur émet des titres de recettes (TR) transmis au comptable via le flux PES_Aller (volet recettes). Chaque titre doit comporter : l'identifiant du débiteur (SIRET ou NIR), la nature de la recette (code article budgétaire), le montant, le délai de paiement et la référence de la décision fondant la créance. Le comptable prend en charge les titres dans Hélios et déclenche les relances automatiques en cas de non-paiement dans les délais légaux.`,
+    statut: 'Active', priorite: 'Haute', type_regle: 'Technique',
+    tags: 'PES V2, recettes, titre, SIRET, NIR, comptable, Hélios, relance',
+    source: 'CGCT art. L1617-5 — Documentation PES V2 — Instruction M57', fichier: 'src/pes/TitreRecetteService.java', ecran: 'Emission titres recettes',
+  },
+  {
+    code: 'RG-043', groupe: 'PES V2 — Protocole d\'Echange Standard',
+    titre: 'PES V2 — Rejet comptable et gestion des retours',
+    description: `Lorsque le comptable rejette un mandat ou un titre dans Hélios, un flux PES_Retour de type "Accusé de Rejet" (AR_Rejet) est émis vers le logiciel de l'ordonnateur. Ce flux contient le motif de rejet codifié (code erreur DGFiP) et les informations permettant d'identifier la pièce rejetée. L'ordonnateur doit traiter le rejet, corriger la pièce et la renvoyer. Les rejets non traités dans un délai de 3 mois peuvent faire l'objet d'une procédure de régularisation d'office par le comptable.`,
+    statut: 'Active', priorite: 'Haute', type_regle: 'Technique',
+    tags: 'PES V2, rejet, PES_Retour, AR_Rejet, Hélios, motif, régularisation',
+    source: 'Documentation PES V2 — Instruction DGFiP — CGCT art. L1617-2', fichier: 'src/pes/RejetComptableService.java', ecran: 'Traitement rejets',
   },
 ];
 
@@ -395,23 +296,23 @@ if (existing > 0) {
 const insertAll = db.transaction(() => {
   for (const r of regles) {
     ins.run({
-      code:       r.code,
-      titre:      r.titre,
-      description:r.description,
-      domaine:    DOMAINE,
-      statut:     r.statut,
-      priorite:   r.priorite,
-      type_regle: r.type_regle,
-      groupe:     r.groupe,
-      tags:       r.tags,
-      source:     r.source,
-      fichier:    r.fichier || '',
-      ecran:      r.ecran   || '',
+      code:        r.code,
+      titre:       r.titre,
+      description: r.description,
+      domaine:     DOMAINE,
+      statut:      r.statut,
+      priorite:    r.priorite,
+      type_regle:  r.type_regle,
+      groupe:      r.groupe,
+      tags:        r.tags,
+      source:      r.source,
+      fichier:     r.fichier || '',
+      ecran:       r.ecran   || '',
     });
   }
 });
 insertAll();
 
 const total = db.prepare("SELECT COUNT(*) as n FROM regles WHERE domaine = 'DGFIP'").get().n;
-console.log(`\n  ✓ ${total} règles DGFIP insérées dans le domaine DGFIP`);
+console.log(`\n  ✓ ${total} règles collectivités territoriales insérées dans le domaine DGFIP`);
 console.log(`  ✓ Total en base : ${db.prepare('SELECT COUNT(*) as n FROM regles').get().n} règles\n`);
