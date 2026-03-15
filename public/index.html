@@ -43,11 +43,6 @@ html,body{height:100%;overflow:hidden}
 body{
   font-family:'Outfit',sans-serif;
   background:var(--bg);
-  background-image:
-    linear-gradient(var(--border) 1px,transparent 1px),
-    linear-gradient(90deg,var(--border) 1px,transparent 1px);
-  background-size:36px 36px;
-  background-position:-1px -1px;
   color:var(--text);
   display:flex;
   height:100vh;
@@ -425,6 +420,43 @@ body{
   border-radius:7px;font-size:11px;color:var(--text3);display:flex;align-items:center;gap:6px;
 }
 .server-url strong{color:var(--text2);font-family:'JetBrains Mono',monospace;font-size:10.5px;word-break:break-all}
+
+/* ── Bulk select ─────────────────────────────────────────────── */
+.btn-select{
+  padding:3px 9px;border-radius:6px;border:1px solid transparent;
+  font-size:11.5px;font-family:'Outfit',sans-serif;color:var(--text3);
+  cursor:pointer;background:transparent;transition:all .12s;
+  display:flex;align-items:center;gap:5px;
+}
+.btn-select:hover{background:var(--surface);color:var(--text2)}
+.btn-select.active{background:var(--accent-bg);border-color:rgba(99,102,241,.3);color:var(--accent2)}
+.card-cb{
+  width:18px;height:18px;min-width:18px;border-radius:5px;border:1.5px solid var(--border2);
+  display:flex;align-items:center;justify-content:center;
+  transition:all .12s;color:#fff;
+}
+.rg-card.selected .card-cb{background:var(--accent);border-color:var(--accent)}
+.rg-card.selected{
+  border-color:rgba(99,102,241,.45)!important;background:rgba(99,102,241,.07)!important;
+  box-shadow:0 0 0 1px rgba(99,102,241,.18)!important;
+}
+#bulk-bar{
+  position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(100px);
+  background:linear-gradient(135deg,#131f3a,#0e1828);
+  border:1px solid var(--border2);border-radius:12px;
+  padding:10px 12px;display:flex;align-items:center;gap:8px;
+  box-shadow:0 8px 32px rgba(0,0,0,.65),0 0 0 1px rgba(99,102,241,.12);
+  z-index:60;transition:transform .28s cubic-bezier(.4,0,.2,1);white-space:nowrap;
+}
+#bulk-bar.show{transform:translateX(-50%) translateY(0)}
+.bulk-count{font-size:13px;color:var(--text2);padding:0 4px}
+.bulk-count strong{color:var(--accent2);font-family:'Syne',sans-serif;font-size:14px}
+.bulk-sep{width:1px;height:18px;background:var(--border2);flex-shrink:0}
+.btn-bulk-all{
+  font-size:12px;color:var(--text3);background:none;border:none;cursor:pointer;
+  padding:4px 8px;border-radius:6px;font-family:'Outfit',sans-serif;transition:all .12s;
+}
+.btn-bulk-all:hover{color:var(--text2);background:var(--surface3)}
 </style>
 </head>
 <body>
@@ -511,6 +543,10 @@ body{
       <button class="sort-btn"        data-sort="code"       onclick="setSort('code')">Code</button>
       <button class="sort-btn"        data-sort="pertinence" onclick="setSort('pertinence')">Pertinence</button>
     </div>
+    <button class="btn-select" id="btn-select" onclick="toggleSelectMode()">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><polyline points="9 11 12 14 22 5"/></svg>
+      Sélectionner
+    </button>
   </div>
 
   <div id="main-scroll">
@@ -670,6 +706,19 @@ body{
 
 <div id="toast"></div>
 
+<!-- ════ BULK BAR ════════════════════════════════════════════ -->
+<div id="bulk-bar">
+  <span class="bulk-count"><strong id="bulk-n">0</strong> sélectionnée(s)</span>
+  <div class="bulk-sep"></div>
+  <button class="btn-bulk-all" id="btn-bulk-all" onclick="selectAll()">Tout sélectionner</button>
+  <div class="bulk-sep"></div>
+  <button class="btn btn-danger" style="padding:5px 13px;font-size:12.5px" onclick="openBulkConfirm()">
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+    Supprimer
+  </button>
+  <button class="btn btn-ghost" style="padding:5px 9px;font-size:13px" onclick="toggleSelectMode()">✕</button>
+</div>
+
 <!-- ════════════════════════════════════════════════════════════
      JAVASCRIPT
 ═══════════════════════════════════════════════════════════════ -->
@@ -703,6 +752,8 @@ const S = {
   editingId: null,
   detailTab: 'details',
   history: [], histLoading: false,
+  selectMode: false,
+  selected: new Set(),
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -902,8 +953,10 @@ function renderResults() {
     const tags    = parseTags(rg.tags).slice(0, 5);
     const desc    = (rg.description||'').trim();
     const fileBase = rg.fichier ? rg.fichier.split(/[\\/]/).pop() : '';
-    return `<div class="rg-card" data-p="${esc(rg.priorite)}" onclick="openDetail(${rg.id})">
+    const isSel   = S.selectMode && S.selected.has(rg.id);
+    return `<div class="rg-card${isSel ? ' selected' : ''}" data-p="${esc(rg.priorite)}" data-id="${rg.id}" onclick="handleCardClick(${rg.id})">
       <div class="card-top">
+        ${S.selectMode ? `<div class="card-cb">${isSel ? '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' : ''}</div>` : ''}
         <div class="card-badges">
           <span class="b-code">${hl(rg.code, q)}</span>
           <span class="badge ${statutCss(rg.statut)}">${esc(rg.statut)}</span>
@@ -1136,6 +1189,75 @@ function openConfirm(rg) {
 function closeConfirm() { document.getElementById('confirm-overlay').classList.remove('show'); }
 
 // ═══════════════════════════════════════════════════════════════
+//  BULK SELECT
+// ═══════════════════════════════════════════════════════════════
+function toggleSelectMode() {
+  S.selectMode = !S.selectMode;
+  if (!S.selectMode) {
+    S.selected.clear();
+    document.getElementById('bulk-bar').classList.remove('show');
+  }
+  document.getElementById('btn-select').classList.toggle('active', S.selectMode);
+  renderResults();
+  if (S.selectMode) updateBulkBar();
+}
+
+function handleCardClick(id) {
+  if (S.selectMode) toggleCardSelect(id);
+  else openDetail(id);
+}
+
+function toggleCardSelect(id) {
+  if (S.selected.has(id)) S.selected.delete(id);
+  else S.selected.add(id);
+  const card = document.querySelector(`[data-id="${id}"]`);
+  if (card) {
+    const sel = S.selected.has(id);
+    card.classList.toggle('selected', sel);
+    const cb = card.querySelector('.card-cb');
+    if (cb) cb.innerHTML = sel
+      ? '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>'
+      : '';
+  }
+  updateBulkBar();
+}
+
+function updateBulkBar() {
+  const n = S.selected.size;
+  document.getElementById('bulk-n').textContent = n;
+  document.getElementById('bulk-bar').classList.toggle('show', S.selectMode && n > 0);
+  const allSel = S.rgs.length > 0 && S.rgs.every(r => S.selected.has(r.id));
+  document.getElementById('btn-bulk-all').textContent = allSel ? 'Tout désélectionner' : 'Tout sélectionner';
+}
+
+function selectAll() {
+  const allSel = S.rgs.every(r => S.selected.has(r.id));
+  if (allSel) S.rgs.forEach(r => S.selected.delete(r.id));
+  else S.rgs.forEach(r => S.selected.add(r.id));
+  renderResults();
+  updateBulkBar();
+}
+
+function openBulkConfirm() {
+  const n = S.selected.size;
+  if (!n) return;
+  const pl = n > 1;
+  document.getElementById('conf-title').textContent = `Supprimer ${n} règle${pl ? 's' : ''} ?`;
+  document.getElementById('conf-text').textContent  = `${n} règle${pl ? 's' : ''} ser${pl ? 'ont' : 'a'} définitivement supprimée${pl ? 's' : ''}. Cette action est irréversible.`;
+  document.getElementById('conf-ok').onclick = async () => {
+    const ids = [...S.selected];
+    await Promise.all(ids.map(id => api(`/rg/${id}`, { method: 'DELETE' })));
+    closeConfirm();
+    S.selectMode = false; S.selected.clear();
+    document.getElementById('btn-select').classList.remove('active');
+    document.getElementById('bulk-bar').classList.remove('show');
+    toast(`${ids.length} règle${ids.length > 1 ? 's' : ''} supprimée${ids.length > 1 ? 's' : ''} ✓`);
+    await refresh();
+  };
+  document.getElementById('confirm-overlay').classList.add('show');
+}
+
+// ═══════════════════════════════════════════════════════════════
 //  FILTERS / SEARCH / SORT
 // ═══════════════════════════════════════════════════════════════
 function toggleFilter(key, value) {
@@ -1188,6 +1310,7 @@ document.addEventListener('keydown', e => {
     if (document.getElementById('confirm-overlay').classList.contains('show')) { closeConfirm(); return; }
     if (document.getElementById('modal-overlay').classList.contains('show'))   { closeModal();   return; }
     if (document.getElementById('detail-panel').classList.contains('open'))    { closeDetail();  return; }
+    if (S.selectMode) { toggleSelectMode(); return; }
   }
   if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
     e.preventDefault();
