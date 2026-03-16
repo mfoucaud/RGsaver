@@ -2,6 +2,9 @@ FROM node:20-alpine
 
 WORKDIR /app
 
+# Outils de build nécessaires pour better-sqlite3 (module natif)
+RUN apk add --no-cache python3 make g++
+
 # Dépendances d'abord (cache Docker)
 COPY package*.json ./
 RUN npm ci --omit=dev
