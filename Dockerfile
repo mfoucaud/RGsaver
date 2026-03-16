@@ -1,13 +1,18 @@
+# Stage 1 : build (node:20 Debian, python3/make/g++ déjà inclus — pas d'apk)
+FROM node:20 AS builder
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci --omit=dev
+
+# Stage 2 : image finale légère
 FROM node:20-alpine
 
 WORKDIR /app
 
-# Outils de build nécessaires pour better-sqlite3 (module natif)
-RUN apk add --no-cache python3 make g++
-
-# Dépendances d'abord (cache Docker)
-COPY package*.json ./
-RUN npm ci --omit=dev
+# Copie uniquement les node_modules compilés depuis le builder
+COPY --from=builder /app/node_modules ./node_modules
 
 # Code source
 COPY server.js ./
