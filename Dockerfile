@@ -6,8 +6,8 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --omit=dev
 
-# Stage 2 : image finale légère
-FROM node:20-alpine
+# Stage 2 : image finale légère (slim = Debian comme le builder → glibc compatible)
+FROM node:20-slim
 
 WORKDIR /app
 
