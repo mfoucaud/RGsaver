@@ -447,6 +447,36 @@ body{
 .fi-select option{background:#111e35;color:var(--text)}
 .fi-textarea{resize:vertical;min-height:90px;line-height:1.6}
 .fi-hint{font-size:11px;color:var(--text3)}
+/* ── Domain picker ───────────────────────────────────────────── */
+.dp-wrap{position:relative}
+.dp-drop{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:200;
+  background:var(--surface);border:1.5px solid var(--border2);border-radius:10px;
+  box-shadow:0 8px 28px rgba(0,0,0,.4);display:none;min-width:200px}
+.dp-drop.open{display:block}
+.dp-search-row{padding:7px 8px;border-bottom:1px solid var(--border)}
+.dp-search-input{width:100%;background:var(--surface2);border:1px solid var(--border2);
+  border-radius:6px;padding:5px 8px;font-size:12.5px;font-family:'Outfit',sans-serif;
+  color:var(--text);outline:none;box-sizing:border-box;transition:border-color .12s}
+.dp-search-input:focus{border-color:var(--accent)}
+.dp-search-input::placeholder{color:var(--text3)}
+.dp-tree{max-height:220px;overflow-y:auto;padding:4px 0}
+.dp-node{display:flex;align-items:center;gap:3px;padding:5px 9px;cursor:pointer;
+  font-size:12.5px;color:var(--text2);transition:background .1s;user-select:none}
+.dp-node:hover{background:var(--surface2);color:var(--text)}
+.dp-node.sel{background:var(--accent-bg);color:var(--accent2)}
+.dp-chev{width:14px;height:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  color:var(--text3);transition:transform .15s;border-radius:3px}
+.dp-chev:hover{color:var(--accent2);background:rgba(99,102,241,.1)}
+.dp-chev.open{transform:rotate(90deg)}
+.dp-spc{width:14px;flex-shrink:0}
+.dp-label{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dp-count{font-size:11px;color:var(--text3);flex-shrink:0}
+.dp-children{border-left:1px solid var(--border);margin-left:14px;padding-left:3px}
+.dp-empty{padding:12px;font-size:12px;color:var(--text3);text-align:center}
+.dp-new{display:flex;align-items:center;gap:6px;padding:7px 10px;cursor:pointer;
+  font-size:12px;font-family:'Outfit',sans-serif;color:var(--accent2);
+  border-top:1px solid var(--border);transition:background .1s}
+.dp-new:hover{background:var(--surface2)}
 /* ── Tag input ───────────────────────────────────────────────── */
 .suggest-btn{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;font-size:11px;font-family:'Outfit',sans-serif;color:var(--accent2);background:var(--accent-bg);border:1px solid var(--accent);border-radius:6px;cursor:pointer;transition:all .12s;white-space:nowrap}
 .suggest-btn:hover{background:var(--accent);color:#fff}
@@ -729,8 +759,17 @@ body{
           </div>
           <div class="fg">
             <label class="fl">Domaine</label>
-            <input class="fi-input" id="f-domaine" type="text" list="dl-domaines" placeholder="Facturation, Commande…" autocomplete="off">
-            <datalist id="dl-domaines"></datalist>
+            <div class="dp-wrap" id="dp-wrap">
+              <input class="fi-input" id="f-domaine" type="text" placeholder="Facturation/Sous-domaine…" autocomplete="off"
+                onfocus="openDP()" oninput="onDpInput(this.value)" onkeydown="onDpKeydown(event)">
+              <div class="dp-drop" id="dp-drop">
+                <div class="dp-search-row">
+                  <input class="dp-search-input" id="dp-search" type="text" placeholder="Filtrer les domaines…"
+                    oninput="renderDP(this.value)" onclick="event.stopPropagation()">
+                </div>
+                <div class="dp-tree" id="dp-tree"></div>
+              </div>
+            </div>
           </div>
         </div>
         <div class="form-grid" style="margin-top:12px">
@@ -955,7 +994,7 @@ async function loadMeta() {
   ]);
   Object.assign(S, { stats, domaines, groupes, ecrans });
   renderSidebar();
-  updateDatalist('dl-domaines', domaines);
+  // dl-domaines replaced by dp tree picker
   updateDatalist('dl-groupes',  groupes);
   updateDatalist('dl-ecrans',   ecrans);
 }
@@ -1048,6 +1087,104 @@ function toggleDomainExpand(e, path) {
   else S.domaineExpanded.add(path);
   renderSidebar();
 }
+
+// ═══════════════════════════════════════════════════════════════
+//  DOMAIN PICKER (form field)
+// ═══════════════════════════════════════════════════════════════
+const dpExpanded = new Set();
+
+function openDP() {
+  const drop = document.getElementById('dp-drop');
+  if (drop.classList.contains('open')) return;
+  // Auto-expand ancestors of current value
+  const cur = document.getElementById('f-domaine').value.trim();
+  if (cur) {
+    const parts = cur.split('/');
+    for (let i = 1; i < parts.length; i++)
+      dpExpanded.add(parts.slice(0, i).join('/'));
+  }
+  drop.classList.add('open');
+  renderDP('');
+  setTimeout(() => { const s = document.getElementById('dp-search'); if (s) { s.value = ''; s.focus(); } }, 40);
+}
+
+function closeDP() {
+  document.getElementById('dp-drop')?.classList.remove('open');
+}
+
+function pickDP(path, e) {
+  e && e.stopPropagation();
+  document.getElementById('f-domaine').value = path;
+  closeDP();
+}
+
+function toggleDpExpand(path, e) {
+  e && e.stopPropagation();
+  if (dpExpanded.has(path)) dpExpanded.delete(path);
+  else dpExpanded.add(path);
+  renderDP(document.getElementById('dp-search')?.value || '');
+}
+
+function renderDpNodes(nodes, query) {
+  return nodes.map(node => {
+    const hasChildren = node.children.length > 0;
+    const safePath = esc(node.path);
+    const isExpanded = dpExpanded.has(node.path) || !!query;
+    const isSel = document.getElementById('f-domaine').value === node.path;
+    // show node if it matches or has matching descendants
+    const matchesSelf = !query || node.path.toLowerCase().includes(query.toLowerCase());
+    const childHtml = hasChildren ? renderDpNodes(node.children, query) : '';
+    if (!matchesSelf && !childHtml) return '';
+    const chevron = hasChildren
+      ? `<span class="dp-chev${isExpanded ? ' open' : ''}" onclick="toggleDpExpand('${safePath}',event)">
+           <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
+         </span>`
+      : `<span class="dp-spc"></span>`;
+    const row = `<div class="dp-node${isSel ? ' sel' : ''}" onclick="pickDP('${safePath}',event)">
+      ${chevron}
+      <span class="dp-label">${esc(node.name)}</span>
+      ${node.count ? `<span class="dp-count">${node.count}</span>` : ''}
+    </div>`;
+    const children = hasChildren && (isExpanded || query)
+      ? `<div class="dp-children">${childHtml}</div>` : '';
+    return row + children;
+  }).join('');
+}
+
+function renderDP(query) {
+  const source = (S.stats.byDomaine || []).length
+    ? S.stats.byDomaine
+    : (S.domaines || []).map(d => ({ domaine: d, n: 0 }));
+  const tree = buildDomainTree(source);
+  const html = renderDpNodes(tree, query);
+  document.getElementById('dp-tree').innerHTML = html || `<div class="dp-empty">Aucun domaine</div>`;
+  // "Créer" option for new value
+  const drop = document.getElementById('dp-drop');
+  drop.querySelector('.dp-new')?.remove();
+  const cur = document.getElementById('f-domaine').value.trim();
+  if (cur && !(S.domaines || []).includes(cur)) {
+    drop.insertAdjacentHTML('beforeend',
+      `<div class="dp-new" onclick="pickDP('${esc(cur)}',event)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0"><path d="M12 5v14M5 12h14"/></svg>
+        Créer &ldquo;${esc(cur)}&rdquo;
+      </div>`);
+  }
+}
+
+function onDpInput(val) {
+  if (!document.getElementById('dp-drop').classList.contains('open'))
+    document.getElementById('dp-drop').classList.add('open');
+  renderDP('');
+}
+
+function onDpKeydown(e) {
+  if (e.key === 'Escape') { closeDP(); e.target.blur(); }
+  if (e.key === 'Enter')  { e.preventDefault(); closeDP(); }
+}
+
+document.addEventListener('click', e => {
+  if (!document.getElementById('dp-wrap')?.contains(e.target)) closeDP();
+});
 
 // ═══════════════════════════════════════════════════════════════
 //  SIDEBAR

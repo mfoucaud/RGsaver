@@ -188,18 +188,17 @@ function addHistory(action, rg_id, before, after, author = '') {
       if ((before[k] ?? '') !== (after[k] ?? '')) changed.push(k);
     }
   }
-  db.prepare(`INSERT INTO rg_history (rg_id, action, before_json, after_json, changed_fields, author) VALUES (?,?,?,?,?,?)`)
-    .run(rg_id, action,
-      before ? JSON.stringify(before) : null,
-      after  ? JSON.stringify(after)  : null,
-      JSON.stringify(changed), author);
+  stmtAddHistory.run(rg_id, action,
+    before ? JSON.stringify(before) : null,
+    after  ? JSON.stringify(after)  : null,
+    JSON.stringify(changed), author);
 }
 
 function sanitizeFTS(q) {
   return q.replace(/["'()*:^]/g, ' ').trim();
 }
 
-function buildFilters(query, fields) {
+function buildFilters(query) {
   let sql = '', params = [];
   const map = { statut: 'r.statut', priorite: 'r.priorite', type_regle: 'r.type_regle', groupe: 'r.groupe' };
   for (const [k, col] of Object.entries(map)) {
@@ -213,6 +212,36 @@ function buildFilters(query, fields) {
   return { sql, params };
 }
 
+const getAuthor = req => req.headers['x-user'] || '';
+
+// ═══════════════════════════════════════════════════════════════
+//  PREPARED STATEMENTS — compilés une fois au démarrage
+// ═══════════════════════════════════════════════════════════════
+const stmtGetRG      = db.prepare('SELECT * FROM regles WHERE id = ?');
+const stmtDeleteRG   = db.prepare('DELETE FROM regles WHERE id = ?');
+const stmtGetHistory = db.prepare('SELECT * FROM rg_history WHERE rg_id = ? ORDER BY created_at DESC LIMIT 50');
+const stmtAddHistory = db.prepare('INSERT INTO rg_history (rg_id, action, before_json, after_json, changed_fields, author) VALUES (?,?,?,?,?,?)');
+const stmtInsertRG   = db.prepare(`
+  INSERT INTO regles (code,titre,description,domaine,statut,priorite,type_regle,groupe,tags,source,fichier,ecran,updated_by)
+  VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+`);
+const stmtUpdateRG   = db.prepare(`
+  UPDATE regles SET code=?,titre=?,description=?,domaine=?,statut=?,priorite=?,type_regle=?,groupe=?,tags=?,source=?,fichier=?,ecran=?,updated_at=datetime('now'),updated_by=?
+  WHERE id=?
+`);
+const stmtStats = {
+  total:      db.prepare('SELECT COUNT(*) as n FROM regles'),
+  byStatut:   db.prepare('SELECT statut,    COUNT(*) as n FROM regles GROUP BY statut    ORDER BY statut'),
+  byDomaine:  db.prepare("SELECT domaine,   COUNT(*) as n FROM regles WHERE domaine   != '' GROUP BY domaine   ORDER BY n DESC"),
+  byPriorite: db.prepare('SELECT priorite,  COUNT(*) as n FROM regles GROUP BY priorite'),
+  byType:     db.prepare("SELECT type_regle,COUNT(*) as n FROM regles GROUP BY type_regle ORDER BY n DESC"),
+  byGroupe:   db.prepare("SELECT groupe,    COUNT(*) as n FROM regles WHERE groupe    != '' GROUP BY groupe    ORDER BY n DESC LIMIT 25"),
+};
+const stmtDomaines   = db.prepare("SELECT DISTINCT domaine FROM regles WHERE domaine != '' ORDER BY domaine");
+const stmtGroupes    = db.prepare("SELECT DISTINCT groupe  FROM regles WHERE groupe  != '' ORDER BY groupe");
+const stmtEcrans     = db.prepare("SELECT DISTINCT ecran   FROM regles WHERE ecran   != '' ORDER BY ecran");
+const stmtNextCode   = db.prepare("SELECT MAX(CAST(SUBSTR(code, INSTR(code, '-') + 1) AS INTEGER)) as max FROM regles");
+
 // ═══════════════════════════════════════════════════════════════
 //  MIDDLEWARE
 // ═══════════════════════════════════════════════════════════════
@@ -224,36 +253,25 @@ app.use(express.static(path.join(__dirname, 'public')));
 // ═══════════════════════════════════════════════════════════════
 
 // ── Stats ──────────────────────────────────────────────────────
-app.get('/api/stats', (req, res) => {
+app.get('/api/stats', (_req, res) => {
   res.json({
-    total:      db.prepare('SELECT COUNT(*) as n FROM regles').get().n,
-    byStatut:   db.prepare('SELECT statut,    COUNT(*) as n FROM regles GROUP BY statut    ORDER BY statut').all(),
-    byDomaine:  db.prepare("SELECT domaine,   COUNT(*) as n FROM regles WHERE domaine   != '' GROUP BY domaine   ORDER BY n DESC").all(),
-    byPriorite: db.prepare('SELECT priorite,  COUNT(*) as n FROM regles GROUP BY priorite').all(),
-    byType:     db.prepare("SELECT type_regle,COUNT(*) as n FROM regles GROUP BY type_regle ORDER BY n DESC").all(),
-    byGroupe:   db.prepare("SELECT groupe,    COUNT(*) as n FROM regles WHERE groupe    != '' GROUP BY groupe    ORDER BY n DESC LIMIT 25").all(),
+    total:      stmtStats.total.get().n,
+    byStatut:   stmtStats.byStatut.all(),
+    byDomaine:  stmtStats.byDomaine.all(),
+    byPriorite: stmtStats.byPriorite.all(),
+    byType:     stmtStats.byType.all(),
+    byGroupe:   stmtStats.byGroupe.all(),
   });
 });
 
 // ── Autocomplete lists ─────────────────────────────────────────
-app.get('/api/domaines', (_req, res) => res.json(
-  db.prepare("SELECT DISTINCT domaine FROM regles WHERE domaine != '' ORDER BY domaine").all().map(r => r.domaine)
-));
-app.get('/api/groupes', (_req, res) => res.json(
-  db.prepare("SELECT DISTINCT groupe FROM regles WHERE groupe != '' ORDER BY groupe").all().map(r => r.groupe)
-));
-app.get('/api/ecrans', (_req, res) => res.json(
-  db.prepare("SELECT DISTINCT ecran FROM regles WHERE ecran != '' ORDER BY ecran").all().map(r => r.ecran)
-));
+app.get('/api/domaines', (_req, res) => res.json(stmtDomaines.all().map(r => r.domaine)));
+app.get('/api/groupes',  (_req, res) => res.json(stmtGroupes.all().map(r => r.groupe)));
+app.get('/api/ecrans',   (_req, res) => res.json(stmtEcrans.all().map(r => r.ecran)));
 
 // ── Next code ──────────────────────────────────────────────────
 app.get('/api/next-code', (_req, res) => {
-  const rows = db.prepare('SELECT code FROM regles').all();
-  let max = 0;
-  for (const { code } of rows) {
-    const m = code.match(/(\d+)$/);
-    if (m) max = Math.max(max, parseInt(m[1]));
-  }
+  const max = stmtNextCode.get().max || 0;
   res.json({ code: `RG-${String(max + 1).padStart(3, '0')}` });
 });
 
@@ -272,7 +290,7 @@ app.get('/api/rg', (req, res) => {
     if (!terms.length) { rows = []; total = 0; }
     else {
       const ftsQuery = terms.map(t => `"${t}"*`).join(' ');
-      const where = `WHERE regles_fts MATCH ?${filterSql.replace(/r\./g, 'r.')}`;
+      const where = `WHERE regles_fts MATCH ?${filterSql}`;
       const params = [ftsQuery, ...filterParams];
       // bm25 weights: code=5, titre=10, description=1, domaine=2, tags=8, source=1, fichier=1, ecran=1, type_regle=1, groupe=2
       const bm25 = 'bm25(regles_fts, 5, 10, 1, 2, 8, 1, 1, 1, 1, 2)';
@@ -295,14 +313,14 @@ app.get('/api/rg', (req, res) => {
 
 // ── Single RG ──────────────────────────────────────────────────
 app.get('/api/rg/:id', (req, res) => {
-  const rg = db.prepare('SELECT * FROM regles WHERE id = ?').get(req.params.id);
+  const rg = stmtGetRG.get(req.params.id);
   if (!rg) return res.status(404).json({ error: 'Not found' });
   res.json(rg);
 });
 
 // ── History ────────────────────────────────────────────────────
 app.get('/api/rg/:id/history', (req, res) => {
-  const rows = db.prepare('SELECT * FROM rg_history WHERE rg_id = ? ORDER BY created_at DESC LIMIT 50').all(req.params.id);
+  const rows = stmtGetHistory.all(req.params.id);
   res.json(rows.map(h => ({
     ...h,
     before: h.before_json ? JSON.parse(h.before_json) : null,
@@ -314,39 +332,33 @@ app.get('/api/rg/:id/history', (req, res) => {
 // ── Create ─────────────────────────────────────────────────────
 app.post('/api/rg', (req, res) => {
   const { code, titre, description, domaine, statut, priorite, type_regle, groupe, tags, source, fichier, ecran } = req.body;
-  const author = req.headers['x-user'] || '';
-  const r = db.prepare(`
-    INSERT INTO regles (code,titre,description,domaine,statut,priorite,type_regle,groupe,tags,source,fichier,ecran,updated_by)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
-  `).run(code, titre, description||'', domaine||'', statut||'Draft', priorite||'Normale',
-         type_regle||'Fonctionnelle', groupe||'', tags||'', source||'', fichier||'', ecran||'', author);
-  const created = db.prepare('SELECT * FROM regles WHERE id = ?').get(r.lastInsertRowid);
+  const author = getAuthor(req);
+  const r = stmtInsertRG.run(code, titre, description||'', domaine||'', statut||'Draft', priorite||'Normale',
+    type_regle||'Fonctionnelle', groupe||'', tags||'', source||'', fichier||'', ecran||'', author);
+  const created = stmtGetRG.get(r.lastInsertRowid);
   addHistory('created', created.id, null, created, author);
   res.json(created);
 });
 
 // ── Update ─────────────────────────────────────────────────────
 app.put('/api/rg/:id', (req, res) => {
-  const before = db.prepare('SELECT * FROM regles WHERE id = ?').get(req.params.id);
+  const before = stmtGetRG.get(req.params.id);
   if (!before) return res.status(404).json({ error: 'Not found' });
   const { code, titre, description, domaine, statut, priorite, type_regle, groupe, tags, source, fichier, ecran } = req.body;
-  const author = req.headers['x-user'] || '';
-  db.prepare(`
-    UPDATE regles SET code=?,titre=?,description=?,domaine=?,statut=?,priorite=?,type_regle=?,groupe=?,tags=?,source=?,fichier=?,ecran=?,updated_at=datetime('now'),updated_by=?
-    WHERE id=?
-  `).run(code, titre, description||'', domaine||'', statut, priorite,
-         type_regle||'Fonctionnelle', groupe||'', tags||'', source||'', fichier||'', ecran||'', author, req.params.id);
-  const after = db.prepare('SELECT * FROM regles WHERE id = ?').get(req.params.id);
+  const author = getAuthor(req);
+  stmtUpdateRG.run(code, titre, description||'', domaine||'', statut, priorite,
+    type_regle||'Fonctionnelle', groupe||'', tags||'', source||'', fichier||'', ecran||'', author, req.params.id);
+  const after = stmtGetRG.get(req.params.id);
   addHistory('updated', after.id, before, after, author);
   res.json(after);
 });
 
 // ── Delete ─────────────────────────────────────────────────────
 app.delete('/api/rg/:id', (req, res) => {
-  const before = db.prepare('SELECT * FROM regles WHERE id = ?').get(req.params.id);
+  const before = stmtGetRG.get(req.params.id);
   if (!before) return res.status(404).json({ error: 'Not found' });
-  db.prepare('DELETE FROM regles WHERE id = ?').run(req.params.id);
-  addHistory('deleted', before.id, before, null, req.headers['x-user'] || '');
+  stmtDeleteRG.run(req.params.id);
+  addHistory('deleted', before.id, before, null, getAuthor(req));
   res.json({ ok: true });
 });
 
@@ -365,12 +377,16 @@ const FR_STOP = new Set([
   'lors','dès','afin','afin','objet','nature','titre','type','liste','valeur',
 ]);
 
-app.post('/api/suggest-tags', (req, res) => {
-  const { titre = '', description = '', tags = '' } = req.body;
+function computeTagSuggestions(titre, description, tags) {
   const existing = new Set(tags.split(',').map(t => t.trim().toLowerCase()).filter(Boolean));
   const scores = new Map();
 
-  function score(text, weight) {
+  function add(t, w) {
+    if (t.length < 2 || existing.has(t)) return;
+    scores.set(t, (scores.get(t) || 0) + w);
+  }
+
+  function scoreText(text, weight) {
     // durées ex: 30 jours, 2 mois
     for (const m of text.matchAll(/\b\d+\s*(?:jours?|mois|ans?|heures?)\b/gi)) {
       add(m[0].trim().toLowerCase(), weight * 3);
@@ -379,36 +395,38 @@ app.post('/api/suggest-tags', (req, res) => {
     for (const m of text.matchAll(/\b[A-ZÀÂÄÉÈÊËÎÏÔÙÛÜÇ]{2,}\b/g)) {
       add(m[0].toLowerCase(), weight * 3);
     }
-    // mots significatifs ≥ 4 lettres (split sur non-lettres pour gérer les accents)
+    // mots significatifs ≥ 4 lettres
     for (const m of text.toLowerCase().matchAll(/[a-zàâäéèêëîïôùûüçœæ]{4,}/g)) {
       if (!FR_STOP.has(m[0])) add(m[0], weight);
     }
   }
 
-  function add(t, w) {
-    if (t.length < 2 || existing.has(t)) return;
-    scores.set(t, (scores.get(t) || 0) + w);
-  }
+  scoreText(titre, 3);       // titre pèse 3×
+  scoreText(description, 1); // description pèse 1×
 
-  score(titre, 3);       // titre pèse 3×
-  score(description, 1); // description pèse 1×
-
-  const suggestions = [...scores.entries()]
+  return [...scores.entries()]
     .sort((a, b) => b[1] - a[1])
     .slice(0, 8)
     .map(([t]) => t);
+}
 
-  res.json({ tags: suggestions });
+app.post('/api/suggest-tags', (req, res) => {
+  const { titre = '', description = '', tags = '' } = req.body;
+  res.json({ tags: computeTagSuggestions(titre, description, tags) });
 });
 
 // ═══════════════════════════════════════════════════════════════
 //  START
 // ═══════════════════════════════════════════════════════════════
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, '0.0.0.0', () => {
-  const nets = Object.values(os.networkInterfaces()).flat().filter(i => i.family === 'IPv4' && !i.internal);
-  console.log('\n  🗂  RGsaver — Référentiel de Règles de Gestion');
-  console.log(`  Local  →  http://localhost:${PORT}`);
-  nets.forEach(i => console.log(`  Réseau →  http://${i.address}:${PORT}`));
-  console.log();
-});
+module.exports = { app, db };
+
+if (require.main === module) {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, '0.0.0.0', () => {
+    const nets = Object.values(os.networkInterfaces()).flat().filter(i => i.family === 'IPv4' && !i.internal);
+    console.log('\n  🗂  RGsaver — Référentiel de Règles de Gestion');
+    console.log(`  Local  →  http://localhost:${PORT}`);
+    nets.forEach(i => console.log(`  Réseau →  http://${i.address}:${PORT}`));
+    console.log();
+  });
+}
