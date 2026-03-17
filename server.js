@@ -49,6 +49,8 @@ for (const col of [
   'ALTER TABLE regles ADD COLUMN groupe     TEXT DEFAULT ""',
   'ALTER TABLE regles ADD COLUMN fichier    TEXT DEFAULT ""',
   'ALTER TABLE regles ADD COLUMN ecran      TEXT DEFAULT ""',
+  'ALTER TABLE rg_history ADD COLUMN author TEXT DEFAULT ""',
+  'ALTER TABLE regles ADD COLUMN updated_by TEXT DEFAULT ""',
 ]) { try { db.exec(col); } catch {} }
 
 // Indexes sur nouvelles colonnes (idempotents)
@@ -179,18 +181,18 @@ if (db.prepare('SELECT COUNT(*) as n FROM regles').get().n === 0) {
 // ═══════════════════════════════════════════════════════════════
 const TRACKED = ['code','titre','description','domaine','statut','priorite','type_regle','groupe','tags','source','fichier','ecran'];
 
-function addHistory(action, rg_id, before, after) {
+function addHistory(action, rg_id, before, after, author = '') {
   const changed = [];
   if (before && after) {
     for (const k of TRACKED) {
       if ((before[k] ?? '') !== (after[k] ?? '')) changed.push(k);
     }
   }
-  db.prepare(`INSERT INTO rg_history (rg_id, action, before_json, after_json, changed_fields) VALUES (?,?,?,?,?)`)
+  db.prepare(`INSERT INTO rg_history (rg_id, action, before_json, after_json, changed_fields, author) VALUES (?,?,?,?,?,?)`)
     .run(rg_id, action,
       before ? JSON.stringify(before) : null,
       after  ? JSON.stringify(after)  : null,
-      JSON.stringify(changed));
+      JSON.stringify(changed), author);
 }
 
 function sanitizeFTS(q) {
@@ -199,9 +201,14 @@ function sanitizeFTS(q) {
 
 function buildFilters(query, fields) {
   let sql = '', params = [];
-  const map = { domaine: 'r.domaine', statut: 'r.statut', priorite: 'r.priorite', type_regle: 'r.type_regle', groupe: 'r.groupe' };
+  const map = { statut: 'r.statut', priorite: 'r.priorite', type_regle: 'r.type_regle', groupe: 'r.groupe' };
   for (const [k, col] of Object.entries(map)) {
     if (query[k]) { sql += ` AND ${col} = ?`; params.push(query[k]); }
+  }
+  // domaine : match exact OU préfixe (pour la hiérarchie DGFIP/Budget)
+  if (query.domaine) {
+    sql += ` AND (r.domaine = ? OR r.domaine LIKE ?)`;
+    params.push(query.domaine, query.domaine + '/%');
   }
   return { sql, params };
 }
@@ -267,10 +274,12 @@ app.get('/api/rg', (req, res) => {
       const ftsQuery = terms.map(t => `"${t}"*`).join(' ');
       const where = `WHERE regles_fts MATCH ?${filterSql.replace(/r\./g, 'r.')}`;
       const params = [ftsQuery, ...filterParams];
-      const orderBy = sort === 'code' ? 'r.code ASC' : sort === 'date' ? 'r.updated_at DESC' : 'rank';
+      // bm25 weights: code=5, titre=10, description=1, domaine=2, tags=8, source=1, fichier=1, ecran=1, type_regle=1, groupe=2
+      const bm25 = 'bm25(regles_fts, 5, 10, 1, 2, 8, 1, 1, 1, 1, 2)';
+      const orderBy = sort === 'code' ? 'r.code ASC' : sort === 'date' ? 'r.updated_at DESC' : bm25;
       try {
         total = db.prepare(`SELECT COUNT(*) as n FROM regles r JOIN regles_fts ON regles_fts.rowid = r.id ${where}`).get(...params).n;
-        rows  = db.prepare(`SELECT r.*, rank FROM regles r JOIN regles_fts ON regles_fts.rowid = r.id ${where} ORDER BY ${orderBy} LIMIT ${limit} OFFSET ${offset}`).all(...params);
+        rows  = db.prepare(`SELECT r.*, ${bm25} as rank FROM regles r JOIN regles_fts ON regles_fts.rowid = r.id ${where} ORDER BY ${orderBy} LIMIT ${limit} OFFSET ${offset}`).all(...params);
       } catch { rows = []; total = 0; }
     }
   } else {
@@ -305,13 +314,14 @@ app.get('/api/rg/:id/history', (req, res) => {
 // ── Create ─────────────────────────────────────────────────────
 app.post('/api/rg', (req, res) => {
   const { code, titre, description, domaine, statut, priorite, type_regle, groupe, tags, source, fichier, ecran } = req.body;
+  const author = req.headers['x-user'] || '';
   const r = db.prepare(`
-    INSERT INTO regles (code,titre,description,domaine,statut,priorite,type_regle,groupe,tags,source,fichier,ecran)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+    INSERT INTO regles (code,titre,description,domaine,statut,priorite,type_regle,groupe,tags,source,fichier,ecran,updated_by)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
   `).run(code, titre, description||'', domaine||'', statut||'Draft', priorite||'Normale',
-         type_regle||'Fonctionnelle', groupe||'', tags||'', source||'', fichier||'', ecran||'');
+         type_regle||'Fonctionnelle', groupe||'', tags||'', source||'', fichier||'', ecran||'', author);
   const created = db.prepare('SELECT * FROM regles WHERE id = ?').get(r.lastInsertRowid);
-  addHistory('created', created.id, null, created);
+  addHistory('created', created.id, null, created, author);
   res.json(created);
 });
 
@@ -320,13 +330,14 @@ app.put('/api/rg/:id', (req, res) => {
   const before = db.prepare('SELECT * FROM regles WHERE id = ?').get(req.params.id);
   if (!before) return res.status(404).json({ error: 'Not found' });
   const { code, titre, description, domaine, statut, priorite, type_regle, groupe, tags, source, fichier, ecran } = req.body;
+  const author = req.headers['x-user'] || '';
   db.prepare(`
-    UPDATE regles SET code=?,titre=?,description=?,domaine=?,statut=?,priorite=?,type_regle=?,groupe=?,tags=?,source=?,fichier=?,ecran=?,updated_at=datetime('now')
+    UPDATE regles SET code=?,titre=?,description=?,domaine=?,statut=?,priorite=?,type_regle=?,groupe=?,tags=?,source=?,fichier=?,ecran=?,updated_at=datetime('now'),updated_by=?
     WHERE id=?
   `).run(code, titre, description||'', domaine||'', statut, priorite,
-         type_regle||'Fonctionnelle', groupe||'', tags||'', source||'', fichier||'', ecran||'', req.params.id);
+         type_regle||'Fonctionnelle', groupe||'', tags||'', source||'', fichier||'', ecran||'', author, req.params.id);
   const after = db.prepare('SELECT * FROM regles WHERE id = ?').get(req.params.id);
-  addHistory('updated', after.id, before, after);
+  addHistory('updated', after.id, before, after, author);
   res.json(after);
 });
 
@@ -335,8 +346,59 @@ app.delete('/api/rg/:id', (req, res) => {
   const before = db.prepare('SELECT * FROM regles WHERE id = ?').get(req.params.id);
   if (!before) return res.status(404).json({ error: 'Not found' });
   db.prepare('DELETE FROM regles WHERE id = ?').run(req.params.id);
-  addHistory('deleted', before.id, before, null);
+  addHistory('deleted', before.id, before, null, req.headers['x-user'] || '');
   res.json({ ok: true });
+});
+
+// ═══════════════════════════════════════════════════════════════
+//  SUGGEST TAGS — extraction locale par fréquence
+// ═══════════════════════════════════════════════════════════════
+const FR_STOP = new Set([
+  'le','la','les','un','une','de','des','du','et','en','au','aux','pour','par',
+  'sur','sous','dans','avec','est','sont','était','sera','ont','avait','soit',
+  'qui','que','qu','se','ce','sa','son','ses','leur','leurs','cet','cette','ces',
+  'il','elle','ils','elles','on','nous','vous','je','tu','ou','ni','ne','pas',
+  'plus','très','tout','tous','bien','mais','donc','car','si','même','autre',
+  'autres','après','avant','lors','dont','quel','quelle','quels','quelles',
+  'comme','entre','sans','selon','être','avoir','faire','peut','doit','faut',
+  'via','dont','ainsi','aussi','notamment','toute','toutes','chaque','tout',
+  'lors','dès','afin','afin','objet','nature','titre','type','liste','valeur',
+]);
+
+app.post('/api/suggest-tags', (req, res) => {
+  const { titre = '', description = '', tags = '' } = req.body;
+  const existing = new Set(tags.split(',').map(t => t.trim().toLowerCase()).filter(Boolean));
+  const scores = new Map();
+
+  function score(text, weight) {
+    // durées ex: 30 jours, 2 mois
+    for (const m of text.matchAll(/\b\d+\s*(?:jours?|mois|ans?|heures?)\b/gi)) {
+      add(m[0].trim().toLowerCase(), weight * 3);
+    }
+    // acronymes ex: MAPA, DGFIP, TVA
+    for (const m of text.matchAll(/\b[A-ZÀÂÄÉÈÊËÎÏÔÙÛÜÇ]{2,}\b/g)) {
+      add(m[0].toLowerCase(), weight * 3);
+    }
+    // mots significatifs ≥ 4 lettres (split sur non-lettres pour gérer les accents)
+    for (const m of text.toLowerCase().matchAll(/[a-zàâäéèêëîïôùûüçœæ]{4,}/g)) {
+      if (!FR_STOP.has(m[0])) add(m[0], weight);
+    }
+  }
+
+  function add(t, w) {
+    if (t.length < 2 || existing.has(t)) return;
+    scores.set(t, (scores.get(t) || 0) + w);
+  }
+
+  score(titre, 3);       // titre pèse 3×
+  score(description, 1); // description pèse 1×
+
+  const suggestions = [...scores.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8)
+    .map(([t]) => t);
+
+  res.json({ tags: suggestions });
 });
 
 // ═══════════════════════════════════════════════════════════════

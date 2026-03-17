@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <style>
 /* ── Config ─ modifier ici pour faire évoluer l'app ──────────── */
 /* Les couleurs des badges sont définies plus bas via les classes CSS */
@@ -121,6 +122,31 @@ body{
 .sb-sep{height:1px;background:var(--border);margin:8px 14px}
 .sb-more{font-size:11px;color:var(--text3);padding:3px 9px;cursor:pointer}
 .sb-more:hover{color:var(--text2)}
+.fi-tree-row{}
+.fi-tree-node{
+  display:flex;align-items:center;gap:4px;
+  padding:5px 9px 5px 9px;border-radius:6px;cursor:pointer;
+  transition:background .1s;margin-bottom:1px;font-size:12.5px;color:var(--text2);
+  user-select:none;
+}
+.fi-tree-node:hover{background:var(--surface);color:var(--text)}
+.fi-tree-node.active{background:var(--accent-bg);color:var(--accent2)}
+.fi-tree-node.active .fi-n{background:var(--accent-bg);color:var(--accent2)}
+.fi-tree-chevron{
+  width:16px;height:16px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  color:var(--text3);font-size:10px;transition:transform .18s,color .12s;border-radius:3px;
+}
+.fi-tree-chevron:hover{color:var(--accent2);background:var(--surface2)}
+.fi-tree-chevron.open{transform:rotate(90deg)}
+.fi-tree-chevron svg{display:block}
+.fi-tree-spacer{width:16px;flex-shrink:0}
+.fi-tree-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fi-tree-children{
+  border-left:1px solid var(--border);
+  margin-left:16px;
+  padding-left:6px;
+  margin-bottom:2px;
+}
 
 /* ── Search ──────────────────────────────────────────────────── */
 .search-wrap{padding:16px 20px 0}
@@ -307,6 +333,48 @@ body{
 .dv{color:var(--text);flex:1;word-break:break-word;line-height:1.5}
 .detail-desc{font-size:13.5px;color:var(--text2);line-height:1.75;white-space:pre-wrap;word-break:break-word}
 
+/* ── Markdown toggle ─────────────────────────────────────────── */
+.md-toggle-wrap{display:flex;align-items:center;justify-content:flex-end;margin-bottom:6px}
+.md-toggle{display:flex;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;overflow:hidden}
+.md-toggle-btn{padding:3px 10px;font-size:11px;font-family:'Outfit',sans-serif;color:var(--text3);cursor:pointer;background:transparent;border:none;transition:all .12s}
+.md-toggle-btn.active{background:var(--accent-bg);color:var(--accent2)}
+/* ── Markdown toolbar ────────────────────────────────────────── */
+.md-toolbar{display:flex;align-items:center;gap:2px;flex-wrap:wrap;padding:5px 8px;background:var(--surface2);border:1.5px solid var(--border2);border-bottom:1px solid var(--border);border-radius:8px 8px 0 0}
+.md-toolbar + .fi-textarea{border-radius:0 0 8px 8px;border-top-color:var(--border)}
+.md-tb-btn{display:inline-flex;align-items:center;justify-content:center;padding:2px 7px;min-width:26px;height:22px;font-size:11.5px;font-family:'JetBrains Mono',monospace;color:var(--text2);background:transparent;border:1px solid transparent;border-radius:4px;cursor:pointer;transition:background .1s,color .1s;white-space:nowrap;line-height:1}
+.md-tb-btn:hover{background:var(--accent-bg);border-color:var(--border2);color:var(--accent2)}
+.md-tb-sep{width:1px;background:var(--border2);margin:1px 3px;align-self:stretch}
+/* ── Markdown rendered ───────────────────────────────────────── */
+.md-render{font-size:13.5px;color:var(--text2);line-height:1.75;word-break:break-word}
+.md-render h1,.md-render h2,.md-render h3,.md-render h4{font-family:'Syne',sans-serif;color:var(--text);margin:14px 0 6px;font-weight:700}
+.md-render h1{font-size:15px}.md-render h2{font-size:14px}.md-render h3{font-size:13px}
+.md-render p{margin:0 0 8px}
+.md-render ul,.md-render ol{padding-left:20px;margin:0 0 8px}
+.md-render li{margin-bottom:3px}
+.md-render code{font-family:'JetBrains Mono',monospace;font-size:12px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:1px 5px;color:var(--accent2)}
+.md-render pre{background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:11px 14px;margin:8px 0;overflow-x:auto}
+.md-render pre code{background:none;border:none;padding:0;font-size:12px;color:var(--text2)}
+.md-render strong{color:var(--text);font-weight:600}
+.md-render em{color:var(--text2);font-style:italic}
+.md-render blockquote{border-left:3px solid var(--accent);padding-left:12px;margin:8px 0;color:var(--text3);font-style:italic}
+.md-render a{color:var(--accent2);text-decoration:underline}
+.md-render hr{border:none;border-top:1px solid var(--border);margin:10px 0}
+.md-render table{border-collapse:collapse;width:100%;margin:8px 0;font-size:12.5px}
+.md-render th{background:var(--surface2);color:var(--text);padding:6px 10px;border:1px solid var(--border);text-align:left}
+.md-render td{padding:6px 10px;border:1px solid var(--border);color:var(--text2)}
+
+/* ── User identity ───────────────────────────────────────────── */
+.user-badge{display:flex;align-items:center;gap:6px;padding:4px 10px;background:var(--surface2);border:1px solid var(--border2);border-radius:20px;cursor:pointer;transition:border-color .12s}
+.user-badge:hover{border-color:var(--accent)}
+.user-avatar{width:20px;height:20px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0}
+.user-name{font-size:12px;font-family:'Outfit',sans-serif;color:var(--text2);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* ── Welcome modal ───────────────────────────────────────────── */
+#welcome-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:300;backdrop-filter:blur(4px)}
+#welcome-overlay.hidden{display:none}
+#welcome-box{background:var(--surface);border:1px solid var(--border2);border-radius:16px;padding:32px;width:360px;text-align:center}
+.welcome-logo{font-size:32px;margin-bottom:12px}
+.welcome-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--text);margin-bottom:6px}
+.welcome-sub{font-size:13px;color:var(--text3);margin-bottom:20px;line-height:1.5}
 .detail-footer{
   padding:14px 20px;border-top:1px solid var(--border);
   display:flex;gap:7px;flex-shrink:0;
@@ -379,6 +447,22 @@ body{
 .fi-select option{background:#111e35;color:var(--text)}
 .fi-textarea{resize:vertical;min-height:90px;line-height:1.6}
 .fi-hint{font-size:11px;color:var(--text3)}
+/* ── Tag input ───────────────────────────────────────────────── */
+.suggest-btn{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;font-size:11px;font-family:'Outfit',sans-serif;color:var(--accent2);background:var(--accent-bg);border:1px solid var(--accent);border-radius:6px;cursor:pointer;transition:all .12s;white-space:nowrap}
+.suggest-btn:hover{background:var(--accent);color:#fff}
+.suggest-btn:disabled{opacity:.5;cursor:default}
+.tags-chip-box{display:flex;flex-wrap:wrap;align-items:center;gap:5px;min-height:38px;padding:5px 8px;background:var(--surface);border:1.5px solid var(--border2);border-radius:8px;cursor:text;transition:border-color .15s,box-shadow .15s}
+.tags-chip-box:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(99,102,241,.12)}
+.tag-pill{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;font-size:12px;font-family:'Outfit',sans-serif;background:var(--accent-bg);border:1px solid var(--accent);border-radius:20px;color:var(--accent2);white-space:nowrap}
+.tag-pill-x{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;font-size:11px;line-height:1;color:var(--accent2);opacity:.6;cursor:pointer;border-radius:50%;transition:opacity .1s,background .1s}
+.tag-pill-x:hover{opacity:1;background:rgba(99,102,241,.2)}
+.tag-type-input{flex:1;min-width:80px;background:transparent;border:none;outline:none;font-size:13px;font-family:'Outfit',sans-serif;color:var(--text);padding:1px 2px}
+.tag-type-input::placeholder{color:var(--text3)}
+/* ── Tag suggestions ─────────────────────────────────────────── */
+.suggest-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;min-height:0}
+.suggest-chip{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;font-size:11.5px;font-family:'Outfit',sans-serif;background:var(--surface2);border:1px solid var(--border2);border-radius:20px;color:var(--text2);cursor:pointer;transition:all .12s}
+.suggest-chip:hover{border-color:var(--accent);color:var(--accent2);background:var(--accent-bg)}
+.suggest-chip::before{content:'+';font-size:11px;color:var(--accent2);opacity:.7}
 .code-mono{font-family:'JetBrains Mono',monospace;font-size:12.5px;letter-spacing:.04em}
 .form-divider{display:flex;align-items:center;gap:10px;margin:10px 0 4px;color:var(--text3);font-size:11px}
 .form-divider::before,.form-divider::after{content:'';flex:1;height:1px;background:var(--border)}
@@ -473,10 +557,16 @@ body{
     </div>
   </div>
 
-  <button class="btn-new" onclick="openModal()">
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
-    Nouvelle RG
-  </button>
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+    <button class="btn-new" style="flex:1;margin-bottom:0" onclick="openModal()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+      Nouvelle RG
+    </button>
+    <div class="user-badge" id="user-badge" onclick="promptUser()" title="Changer de nom">
+      <div class="user-avatar" id="user-avatar">?</div>
+      <span class="user-name" id="user-name-lbl">Invité</span>
+    </div>
+  </div>
 
   <div id="sidebar-scroll">
     <div class="sb-section">
@@ -652,14 +742,47 @@ body{
         </div>
         <!-- Description -->
         <div class="fg full" style="margin-top:12px">
-          <label class="fl">Description</label>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+            <label class="fl" style="margin-bottom:0">Description</label>
+            <div class="md-toggle">
+              <button type="button" class="md-toggle-btn active" id="form-md-edit-btn" onclick="setFormDescMode('edit')">Édition</button>
+              <button type="button" class="md-toggle-btn" id="form-md-preview-btn" onclick="setFormDescMode('preview')">Aperçu</button>
+            </div>
+          </div>
+          <div class="md-toolbar" id="md-toolbar">
+            <button type="button" class="md-tb-btn" title="Titre 1" onclick="mdInsert('h1')">H1</button>
+            <button type="button" class="md-tb-btn" title="Titre 2" onclick="mdInsert('h2')">H2</button>
+            <button type="button" class="md-tb-btn" title="Titre 3" onclick="mdInsert('h3')">H3</button>
+            <div class="md-tb-sep"></div>
+            <button type="button" class="md-tb-btn" title="Gras" onclick="mdInsert('bold')"><b>G</b></button>
+            <button type="button" class="md-tb-btn" title="Italique" onclick="mdInsert('italic')"><i>I</i></button>
+            <button type="button" class="md-tb-btn" title="Barré" onclick="mdInsert('strike')" style="text-decoration:line-through">S</button>
+            <div class="md-tb-sep"></div>
+            <button type="button" class="md-tb-btn" title="Code inline" onclick="mdInsert('code')">`code`</button>
+            <button type="button" class="md-tb-btn" title="Bloc de code" onclick="mdInsert('codeblock')">```</button>
+            <div class="md-tb-sep"></div>
+            <button type="button" class="md-tb-btn" title="Liste à puces" onclick="mdInsert('ul')">• Liste</button>
+            <button type="button" class="md-tb-btn" title="Liste numérotée" onclick="mdInsert('ol')">1. Liste</button>
+            <button type="button" class="md-tb-btn" title="Citation" onclick="mdInsert('quote')">" Citation</button>
+            <div class="md-tb-sep"></div>
+            <button type="button" class="md-tb-btn" title="Séparateur horizontal" onclick="mdInsert('hr')">—</button>
+          </div>
           <textarea class="fi-textarea" id="f-description" rows="5" placeholder="Détail de la règle, cas limites, exceptions, exemples…"></textarea>
+          <div class="md-render" id="f-description-preview" style="display:none;min-height:90px;padding:8px 11px;border:1.5px solid var(--border2);border-radius:8px;background:var(--surface)"></div>
         </div>
         <!-- Tags -->
         <div class="fg full" style="margin-top:12px">
-          <label class="fl">Tags</label>
-          <input class="fi-input" id="f-tags" type="text" placeholder="montant, validation, seuil, TVA">
-          <span class="fi-hint">Mots-clés séparés par des virgules</span>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+            <label class="fl" style="margin-bottom:0">Tags</label>
+            <button type="button" class="suggest-btn" id="suggest-tags-btn" onclick="suggestTags()">✨ Suggérer</button>
+          </div>
+          <input type="hidden" id="f-tags">
+          <div class="tags-chip-box" id="tags-chip-box" onclick="document.getElementById('tag-type-input').focus()">
+            <input class="tag-type-input" id="tag-type-input" placeholder="Ajouter un tag…" autocomplete="off"
+              onkeydown="onTagKey(event)" oninput="onTagInput(event)">
+          </div>
+          <div class="suggest-chips" id="suggest-chips"></div>
+          <span class="fi-hint">Entrée ou virgule pour valider · cliquez sur × pour supprimer</span>
         </div>
         <!-- Source -->
         <div class="fg full" style="margin-top:12px">
@@ -688,6 +811,20 @@ body{
         <span id="modal-save-lbl">Créer la RG</span>
       </button>
     </div>
+  </div>
+</div>
+
+<!-- ════ WELCOME ═════════════════════════════════════════════ -->
+<div id="welcome-overlay" class="hidden">
+  <div id="welcome-box">
+    <div class="welcome-logo">🗂</div>
+    <div class="welcome-title">Bienvenue sur RGsaver</div>
+    <div class="welcome-sub">Comment souhaitez-vous être identifié·e dans l'historique des modifications ?</div>
+    <input class="fi-input" id="welcome-input" type="text" placeholder="Votre prénom ou pseudo…" maxlength="40"
+      onkeydown="if(event.key==='Enter') saveUser()" style="margin-bottom:12px">
+    <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="saveUser()">
+      Continuer →
+    </button>
   </div>
 </div>
 
@@ -754,6 +891,8 @@ const S = {
   history: [], histLoading: false,
   selectMode: false,
   selected: new Set(),
+  descViewMode: 'visual',
+  domaineExpanded: new Set(),
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -791,8 +930,21 @@ function typeCss(t) {
 // ═══════════════════════════════════════════════════════════════
 //  API
 // ═══════════════════════════════════════════════════════════════
+// ── Cookie user ───────────────────────────────────────────────
+function getCookie(name) {
+  return document.cookie.split(';').map(c => c.trim()).find(c => c.startsWith(name + '='))?.split('=').slice(1).join('=') || '';
+}
+function setCookie(name, value, days = 365) {
+  const exp = new Date(Date.now() + days * 864e5).toUTCString();
+  document.cookie = `${name}=${encodeURIComponent(value)};expires=${exp};path=/;SameSite=Lax`;
+}
+function getCurrentUser() { return decodeURIComponent(getCookie('rgsaver_user') || ''); }
+
 async function api(path, opts = {}) {
-  const r = await fetch('/api' + path, { headers:{'Content-Type':'application/json'}, ...opts });
+  const headers = { 'Content-Type': 'application/json' };
+  const user = getCurrentUser();
+  if (user) headers['X-User'] = user;
+  const r = await fetch('/api' + path, { headers, ...opts });
   if (!r.ok) throw new Error('API ' + r.status);
   return r.json();
 }
@@ -841,6 +993,63 @@ async function loadHistory(id) {
 async function refresh() { await loadMeta(); await loadRGs(); }
 
 // ═══════════════════════════════════════════════════════════════
+//  DOMAIN TREE
+// ═══════════════════════════════════════════════════════════════
+function buildDomainTree(byDomaine) {
+  // byDomaine = [{domaine:'DGFIP/Budget', n:3}, ...]
+  const root = {}; // { name, path, count, children:{} }
+  for (const { domaine, n } of byDomaine) {
+    const parts = (domaine || '').split('/');
+    let node = root;
+    let path = '';
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+      path = path ? path + '/' + part : part;
+      if (!node[part]) node[part] = { name: part, path, count: 0, children: {} };
+      node[part].count += n;   // accumulate counts up the tree
+      node = node[part].children;
+    }
+  }
+  function toArray(map) {
+    return Object.values(map).sort((a,b) => a.name.localeCompare(b.name, 'fr'))
+      .map(n => ({ ...n, children: toArray(n.children) }));
+  }
+  return toArray(root);
+}
+
+function renderDomainTree(nodes, depth = 0) {
+  return nodes.map(node => {
+    const hasChildren = node.children.length > 0;
+    const isExpanded = S.domaineExpanded.has(node.path);
+    const isActive = S.filters.domaine === node.path;
+    const safePath = esc(node.path);
+    const chevron = hasChildren
+      ? `<span class="fi-tree-chevron${isExpanded ? ' open' : ''}" onclick="toggleDomainExpand(event,'${safePath}')">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
+        </span>`
+      : `<span class="fi-tree-spacer"></span>`;
+    const row = `<div class="fi-tree-row">
+      <div class="fi-tree-node${isActive ? ' active' : ''}" onclick="toggleFilter('domaine','${safePath}')">
+        ${chevron}
+        <span class="fi-tree-name">${esc(node.name)}</span>
+        <span class="fi-n">${node.count}</span>
+      </div>
+    </div>`;
+    const childrenHtml = hasChildren && isExpanded
+      ? `<div class="fi-tree-children">${renderDomainTree(node.children, depth + 1)}</div>`
+      : '';
+    return row + childrenHtml;
+  }).join('');
+}
+
+function toggleDomainExpand(e, path) {
+  e.stopPropagation();
+  if (S.domaineExpanded.has(path)) S.domaineExpanded.delete(path);
+  else S.domaineExpanded.add(path);
+  renderSidebar();
+}
+
+// ═══════════════════════════════════════════════════════════════
 //  SIDEBAR
 // ═══════════════════════════════════════════════════════════════
 function renderSidebar() {
@@ -879,7 +1088,7 @@ function renderSidebar() {
     </div>`).join('');
 
   document.getElementById('sb-domaines').innerHTML = (S.stats.byDomaine||[]).length
-    ? makeList(S.stats.byDomaine.map(r => ({domaine:r.domaine,n:r.n})), 'domaine', null, 15)
+    ? renderDomainTree(buildDomainTree(S.stats.byDomaine))
     : `<div style="font-size:11.5px;color:var(--text3);padding:3px 9px">Aucun domaine</div>`;
 
   document.getElementById('sb-groupes').innerHTML = (S.stats.byGroupe||[]).length
@@ -971,7 +1180,7 @@ function renderResults() {
       </div>
       ${desc ? `<div class="card-desc">${hl(desc, q)}</div>` : ''}
       <div class="card-footer">
-        <span class="card-upd">Màj ${fmtDate(rg.updated_at)}</span>
+        <span class="card-upd">Màj ${fmtDate(rg.updated_at)}${rg.updated_by ? ` · <span style="opacity:.75">${esc(rg.updated_by)}</span>` : ''}</span>
         <div class="card-locs">
           ${fileBase ? `<span class="loc-file" title="${esc(rg.fichier)}">📄 ${esc(fileBase)}</span>` : ''}
           ${rg.ecran ? `<span class="loc-screen" title="${esc(rg.ecran)}">🖥 ${hl(rg.ecran, q)}</span>` : ''}
@@ -1023,13 +1232,23 @@ function renderDetailContent() {
     <div class="detail-title">${esc(rg.titre)}</div>
     ${row('Domaine',  esc(rg.domaine))}
     ${row('Groupe',   esc(rg.groupe))}
-    ${rg.description ? `<div class="detail-row"><div class="dl">Description</div><div class="dv"><div class="detail-desc">${esc(rg.description)}</div></div></div>` : ''}
+    ${rg.description ? `<div class="detail-row"><div class="dl">Description</div><div class="dv">
+      <div class="md-toggle-wrap">
+        <div class="md-toggle">
+          <button class="md-toggle-btn ${S.descViewMode !== 'raw' ? 'active' : ''}" onclick="setDescView('visual')">Visuel</button>
+          <button class="md-toggle-btn ${S.descViewMode === 'raw' ? 'active' : ''}" onclick="setDescView('raw')">Brut</button>
+        </div>
+      </div>
+      ${S.descViewMode === 'raw'
+        ? `<div class="detail-desc">${esc(rg.description)}</div>`
+        : `<div class="md-render">${typeof marked !== 'undefined' ? marked.parse(rg.description) : esc(rg.description).replace(/\n/g,'<br>')}</div>`}
+    </div></div>` : ''}
     ${tags.length ? `<div class="detail-row"><div class="dl">Tags</div><div class="dv" style="display:flex;gap:5px;flex-wrap:wrap">${tags.map(t=>`<span class="tag-chip">${esc(t)}</span>`).join('')}</div></div>` : ''}
     ${row('Source', esc(rg.source))}
     ${rg.fichier ? `<div class="detail-row"><div class="dl">Fichier</div><div class="dv"><span class="loc-file" style="font-size:12px;max-width:none;white-space:normal" title="${esc(rg.fichier)}">📄 ${esc(rg.fichier)}</span></div></div>` : ''}
     ${rg.ecran   ? `<div class="detail-row"><div class="dl">Écran</div><div class="dv"><span class="loc-screen" style="max-width:none">🖥 ${esc(rg.ecran)}</span></div></div>` : ''}
     <div class="detail-row"><div class="dl">Créé le</div><div class="dv" style="font-size:12px;color:var(--text3)">${esc(fmtDateTime(rg.created_at))}</div></div>
-    <div class="detail-row"><div class="dl">Modifié</div><div class="dv" style="font-size:12px;color:var(--text3)">${esc(fmtDateTime(rg.updated_at))}</div></div>`;
+    <div class="detail-row"><div class="dl">Modifié</div><div class="dv" style="font-size:12px;color:var(--text3)">${esc(fmtDateTime(rg.updated_at))}${rg.updated_by ? ` par <strong style="color:var(--text2)">${esc(rg.updated_by)}</strong>` : ''}</div></div>`;
 }
 
 function renderHistoryTab() {
@@ -1060,10 +1279,17 @@ function renderHistoryTab() {
         </div>`;
       }).join('')}</div>`;
     }
+    const authorHtml = h.author
+      ? `<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--text3)">
+           <span style="width:16px;height:16px;border-radius:50%;background:var(--accent);display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff">${esc(h.author.charAt(0).toUpperCase())}</span>
+           ${esc(h.author)}
+         </span>`
+      : '';
     return `<div class="hist-entry">
       <div class="hist-meta">
         <span class="hist-action ${AC[h.action]}">${AL[h.action]}</span>
         <span class="hist-date">${esc(fmtDateTime(h.created_at))}</span>
+        ${authorHtml}
       </div>
       ${diff}
     </div>`;
@@ -1085,6 +1311,180 @@ function closeDetail() {
   document.getElementById('detail-panel').classList.remove('open');
   document.getElementById('detail-overlay').classList.remove('show');
   S.selectedId = null;
+}
+
+function setDescView(mode) {
+  S.descViewMode = mode;
+  renderDetailContent();
+}
+
+function setFormDescMode(mode) {
+  const ta      = document.getElementById('f-description');
+  const preview = document.getElementById('f-description-preview');
+  const toolbar = document.getElementById('md-toolbar');
+  const editBtn = document.getElementById('form-md-edit-btn');
+  const previewBtn = document.getElementById('form-md-preview-btn');
+  if (mode === 'preview') {
+    preview.innerHTML = typeof marked !== 'undefined' ? marked.parse(ta.value || '') : (ta.value || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\n/g,'<br>');
+    ta.style.display = 'none';
+    toolbar.style.display = 'none';
+    preview.style.display = '';
+    editBtn.classList.remove('active');
+    previewBtn.classList.add('active');
+  } else {
+    ta.style.display = '';
+    toolbar.style.display = '';
+    preview.style.display = 'none';
+    editBtn.classList.add('active');
+    previewBtn.classList.remove('active');
+    ta.focus();
+  }
+}
+
+async function suggestTags() {
+  const btn = document.getElementById('suggest-tags-btn');
+  const chips = document.getElementById('suggest-chips');
+  const titre = document.getElementById('f-titre').value.trim();
+  const description = document.getElementById('f-description').value.trim();
+  const tags = document.getElementById('f-tags').value.trim();
+
+  if (!titre && !description) { toast('Renseignez d\'abord un titre ou une description', true); return; }
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Analyse…';
+  chips.innerHTML = '';
+
+  try {
+    const res = await api('/suggest-tags', { method: 'POST', body: JSON.stringify({ titre, description, tags }) });
+    if (!res.tags?.length) { toast('Aucune suggestion trouvée'); return; }
+    chips.innerHTML = res.tags.map(t =>
+      `<span class="suggest-chip" onclick="addTag('${esc(t)}')">${esc(t)}</span>`
+    ).join('');
+  } catch(e) {
+    toast('Erreur : ' + e.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '✨ Suggérer';
+  }
+}
+
+// ── Tag chip input ────────────────────────────────────────────
+function getTagsList() {
+  return (document.getElementById('f-tags').value || '').split(',').map(t => t.trim()).filter(Boolean);
+}
+
+function syncTagsHidden() {
+  document.getElementById('f-tags').value = getTagsList().join(', ');
+}
+
+function renderTagPills() {
+  const box = document.getElementById('tags-chip-box');
+  const input = document.getElementById('tag-type-input');
+  // retire les pills existantes, garde l'input
+  box.querySelectorAll('.tag-pill').forEach(p => p.remove());
+  getTagsList().forEach(tag => {
+    const pill = document.createElement('span');
+    pill.className = 'tag-pill';
+    pill.innerHTML = `${esc(tag)}<span class="tag-pill-x" onclick="removeTag('${esc(tag)}')" title="Supprimer">×</span>`;
+    box.insertBefore(pill, input);
+  });
+}
+
+function addTag(tag) {
+  tag = tag.trim();
+  if (!tag) return;
+  const existing = getTagsList();
+  if (!existing.includes(tag)) {
+    existing.push(tag);
+    document.getElementById('f-tags').value = existing.join(', ');
+    renderTagPills();
+  }
+  // retire le chip de suggestion cliqué
+  document.querySelectorAll('.suggest-chip').forEach(c => {
+    if (c.textContent.replace(/^\+/, '').trim() === tag) c.remove();
+  });
+}
+
+function removeTag(tag) {
+  const updated = getTagsList().filter(t => t !== tag);
+  document.getElementById('f-tags').value = updated.join(', ');
+  renderTagPills();
+}
+
+function onTagKey(e) {
+  const input = e.target;
+  if (e.key === 'Enter' || e.key === ',') {
+    e.preventDefault();
+    addTag(input.value.replace(/,/g, ''));
+    input.value = '';
+  } else if (e.key === 'Backspace' && input.value === '') {
+    const tags = getTagsList();
+    if (tags.length) { removeTag(tags[tags.length - 1]); }
+  }
+}
+
+function onTagInput(e) {
+  // si l'utilisateur colle du texte avec des virgules
+  const val = e.target.value;
+  if (val.includes(',')) {
+    val.split(',').forEach(t => addTag(t));
+    e.target.value = '';
+  }
+}
+
+function mdInsert(action) {
+  const ta = document.getElementById('f-description');
+  ta.focus();
+  const s = ta.selectionStart, e = ta.selectionEnd;
+  const sel = ta.value.slice(s, e);
+  const before = ta.value.slice(0, s);
+  const after  = ta.value.slice(e);
+  const nl = (before.length > 0 && !before.endsWith('\n')) ? '\n' : '';
+  let insert = '', ns = s, ne = s;
+
+  switch (action) {
+    case 'bold':   { const p=sel||'texte'; insert=`**${p}**`; ns=s+2; ne=ns+p.length; break; }
+    case 'italic': { const p=sel||'texte'; insert=`*${p}*`;   ns=s+1; ne=ns+p.length; break; }
+    case 'strike': { const p=sel||'texte'; insert=`~~${p}~~`; ns=s+2; ne=ns+p.length; break; }
+    case 'code':   { const p=sel||'code';  insert=`\`${p}\``; ns=s+1; ne=ns+p.length; break; }
+    case 'codeblock': {
+      const p=sel||'code';
+      insert=`${nl}\`\`\`\n${p}\n\`\`\`\n`;
+      ns=s+nl.length+4; ne=ns+p.length; break;
+    }
+    case 'h1': case 'h2': case 'h3': {
+      const h={h1:'#',h2:'##',h3:'###'}[action];
+      const p=sel||'Titre';
+      insert=`${nl}${h} ${p}`;
+      ns=s+nl.length+h.length+1; ne=ns+p.length; break;
+    }
+    case 'ul': {
+      const p=sel||'élément';
+      const lines=p.split('\n').map(l=>`- ${l}`).join('\n');
+      insert=`${nl}${lines}\n`;
+      if (sel) { ns=ne=s+insert.length; } else { ns=s+nl.length+2; ne=ns+p.length; }
+      break;
+    }
+    case 'ol': {
+      const p=sel||'élément';
+      const lines=p.split('\n').map((l,i)=>`${i+1}. ${l}`).join('\n');
+      insert=`${nl}${lines}\n`;
+      if (sel) { ns=ne=s+insert.length; } else { ns=s+nl.length+3; ne=ns+p.length; }
+      break;
+    }
+    case 'quote': {
+      const p=sel||'citation';
+      const lines=p.split('\n').map(l=>`> ${l}`).join('\n');
+      insert=`${nl}${lines}\n`;
+      if (sel) { ns=ne=s+insert.length; } else { ns=s+nl.length+2; ne=ns+p.length; }
+      break;
+    }
+    case 'hr': {
+      insert=`${nl}---\n`; ns=ne=s+insert.length; break;
+    }
+  }
+  ta.value = before + insert + after;
+  ta.setSelectionRange(ns, ne);
 }
 
 function editFromDetail() {
@@ -1119,6 +1519,7 @@ async function openModal(rg = null) {
     document.getElementById('f-type-regle').value = rg.type_regle || 'Fonctionnelle';
     document.getElementById('f-groupe').value     = rg.groupe     || '';
     document.getElementById('f-tags').value       = rg.tags       || '';
+    renderTagPills();
     document.getElementById('f-source').value     = rg.source     || '';
     document.getElementById('f-fichier').value    = rg.fichier    || '';
     document.getElementById('f-ecran').value      = rg.ecran      || '';
@@ -1130,6 +1531,10 @@ async function openModal(rg = null) {
     } catch { document.getElementById('f-code').value = 'RG-001'; }
   }
 
+  if (!rg) { document.getElementById('f-tags').value = ''; renderTagPills(); }
+  document.getElementById('tag-type-input').value = '';
+  document.getElementById('suggest-chips').innerHTML = '';
+  setFormDescMode('edit');
   document.getElementById('modal-overlay').classList.add('show');
   setTimeout(() => document.getElementById('f-titre').focus(), 100);
 }
@@ -1262,6 +1667,13 @@ function openBulkConfirm() {
 // ═══════════════════════════════════════════════════════════════
 function toggleFilter(key, value) {
   S.filters[key] = S.filters[key] === value ? '' : value;
+  // auto-expand ancestors of selected domaine
+  if (key === 'domaine' && S.filters.domaine) {
+    const parts = S.filters.domaine.split('/');
+    for (let i = 1; i < parts.length; i++) {
+      S.domaineExpanded.add(parts.slice(0, i).join('/'));
+    }
+  }
   renderSidebar();
   loadRGs();
 }
@@ -1323,9 +1735,41 @@ document.addEventListener('keydown', e => {
 });
 
 // ═══════════════════════════════════════════════════════════════
+//  USER IDENTITY
+// ═══════════════════════════════════════════════════════════════
+function renderUserBadge() {
+  const name = getCurrentUser();
+  const avatar = document.getElementById('user-avatar');
+  const label  = document.getElementById('user-name-lbl');
+  if (name) {
+    avatar.textContent = name.charAt(0).toUpperCase();
+    label.textContent  = name;
+  } else {
+    avatar.textContent = '?';
+    label.textContent  = 'Invité';
+  }
+}
+
+function promptUser() {
+  document.getElementById('welcome-input').value = getCurrentUser();
+  document.getElementById('welcome-overlay').classList.remove('hidden');
+  setTimeout(() => document.getElementById('welcome-input').focus(), 50);
+}
+
+function saveUser() {
+  const name = document.getElementById('welcome-input').value.trim();
+  if (!name) return;
+  setCookie('rgsaver_user', name);
+  document.getElementById('welcome-overlay').classList.add('hidden');
+  renderUserBadge();
+}
+
+// ═══════════════════════════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════════════════════════
 (async () => {
+  renderUserBadge();
+  if (!getCurrentUser()) promptUser();
   await loadMeta();
   await loadRGs();
 })();
