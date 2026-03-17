@@ -1935,53 +1935,53 @@ function saveUser() {
 //  THEME PICKER
 // ═══════════════════════════════════════════════════════════════
 const THEMES = {
-  // Indigo : fond quasi-neutre bleu-nuit très désaturé, accent violet électrique bien lisible
+  // Indigo : violet doux désaturé — proche Linear, jamais électrique
   indigo: {
     label:'Indigo', color:'#6366f1',
     vars:{ '--bg':'#090e18','--bg-grid':'#0e1420','--surface':'#131b2e','--surface2':'#192338','--surface3':'#1f2c44',
-           '--border':'#212f48','--border2':'#2c3f60','--accent':'#6366f1','--accent2':'#818cf8',
-           '--accent-dark':'#4f52d4','--accent-rgb':'99,102,241',
-           '--text':'#e2e8f5','--text2':'#94a8c4','--text3':'#526680' }
+           '--border':'#212f48','--border2':'#2c3f60','--accent':'#7c7fcc','--accent2':'#a5a8e0',
+           '--accent-dark':'#6264a8','--accent-rgb':'124,127,204',
+           '--text':'#d8e0ee','--text2':'#8090a8','--text3':'#4a5e78' }
   },
-  // Émeraude : fond anthracite très légèrement teinté vert (saturation ~8%), surfaces lisibles, accent vert vif sur fond neutre
+  // Émeraude : vert sauge muted — professionnel, loin du néon
   emerald: {
     label:'Émeraude', color:'#10b981',
     vars:{ '--bg':'#090f0d','--bg-grid':'#0d1512','--surface':'#121e1a','--surface2':'#172622','--surface3':'#1c2f28',
-           '--border':'#1e3530','--border2':'#26463e','--accent':'#10b981','--accent2':'#34d399',
-           '--accent-dark':'#0a9e6e','--accent-rgb':'16,185,129',
-           '--text':'#ddf2ea','--text2':'#72b89a','--text3':'#3a6e56' }
+           '--border':'#1e3530','--border2':'#26463e','--accent':'#3d8c72','--accent2':'#6aab92',
+           '--accent-dark':'#2e7060','--accent-rgb':'61,140,114',
+           '--text':'#d4ebe3','--text2':'#6a9482','--text3':'#365c4a' }
   },
-  // Ambre : fond charbon neutre très légèrement chaud (saturation ~6%), surfaces grises chaudes, accent or lumineux sans orange
+  // Ambre : or antiquaire mat — chaleur sans criard
   amber: {
     label:'Ambre', color:'#f59e0b',
     vars:{ '--bg':'#0f0e0b','--bg-grid':'#151310','--surface':'#1c1a15','--surface2':'#23211a','--surface3':'#2b2820',
-           '--border':'#302c22','--border2':'#403c2e','--accent':'#f59e0b','--accent2':'#fbbf24',
-           '--accent-dark':'#d4870a','--accent-rgb':'245,158,11',
-           '--text':'#f0ead8','--text2':'#b09a6a','--text3':'#6e5e3a' }
+           '--border':'#302c22','--border2':'#403c2e','--accent':'#a07830','--accent2':'#c4a060',
+           '--accent-dark':'#7e5e22','--accent-rgb':'160,120,48',
+           '--text':'#e6dfc8','--text2':'#9a8660','--text3':'#625438' }
   },
-  // Cyan : fond bleu-noir quasi pur, très légère teinte cyan (saturation ~8%), accent cyan électrique très distinctif
+  // Cyan : bleu-vert ardoise — sobre, loin du néon
   cyan: {
     label:'Cyan', color:'#06b6d4',
     vars:{ '--bg':'#080d10','--bg-grid':'#0c1318','--surface':'#101b22','--surface2':'#14232c','--surface3':'#192c38',
-           '--border':'#1b3240','--border2':'#234256','--accent':'#06b6d4','--accent2':'#22d3ee',
-           '--accent-dark':'#0499b5','--accent-rgb':'6,182,212',
-           '--text':'#ddf3f8','--text2':'#5db8ce','--text3':'#2e6e80' }
+           '--border':'#1b3240','--border2':'#234256','--accent':'#3a8fa0','--accent2':'#6ab0be',
+           '--accent-dark':'#2c7282','--accent-rgb':'58,143,160',
+           '--text':'#d4edf3','--text2':'#5a9aaa','--text3':'#2c6070' }
   },
-  // Rose : fond anthracite neutre très légèrement rosé (saturation ~5%), exit rouge sang — personnalité framboise sophistiquée
+  // Rose : bordeaux rosé sophistiqué — moins rouge, plus couture
   rose: {
     label:'Rose', color:'#f43f5e',
     vars:{ '--bg':'#100d0f','--bg-grid':'#161214','--surface':'#1e181b','--surface2':'#261e22','--surface3':'#2e2429',
-           '--border':'#352830','--border2':'#45343e','--accent':'#f43f5e','--accent2':'#fb7185',
-           '--accent-dark':'#d42e50','--accent-rgb':'244,63,94',
-           '--text':'#f2dde3','--text2':'#b87888','--text3':'#744a56' }
+           '--border':'#352830','--border2':'#45343e','--accent':'#b84e64','--accent2':'#d48090',
+           '--accent-dark':'#943c50','--accent-rgb':'184,78,100',
+           '--text':'#e8d6da','--text2':'#a06878','--text3':'#6a3e4a' }
   },
-  // Ardoise : accent remplacé par cuivre/bronze (#c2885a) — chaud et original sur fond bleu-gris froid, fort contraste
+  // Ardoise : cuivre mat sobre — chaud et discret sur fond froid
   slate: {
     label:'Ardoise', color:'#c2885a',
     vars:{ '--bg':'#080b10','--bg-grid':'#0d1118','--surface':'#111720','--surface2':'#161e2a','--surface3':'#1b2434',
-           '--border':'#1f2c3e','--border2':'#283c55','--accent':'#c2885a','--accent2':'#d4a478',
-           '--accent-dark':'#a87048','--accent-rgb':'194,136,90',
-           '--text':'#dce4f0','--text2':'#7e96b0','--text3':'#445e74' }
+           '--border':'#1f2c3e','--border2':'#283c55','--accent':'#a07050','--accent2':'#be9470',
+           '--accent-dark':'#825838','--accent-rgb':'160,112,80',
+           '--text':'#d4dcea','--text2':'#72889e','--text3':'#405468' }
   },
 };
 
